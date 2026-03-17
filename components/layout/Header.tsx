@@ -1,29 +1,46 @@
-import { Search, ShoppingCart, User } from "lucide-react";
+"use client";
 
-export default function Navbar() {
+import Link from "next/link";
+import { ShoppingCart } from "lucide-react";
+import SearchBar from "@/components/ui/SearchBar";
+import { useCart } from "@/store/useCart";
+
+export default function Header() {
+  const items = useCart((state) => state.items);
+  
+  // CHANGE: Only count unique items in the array
+  const uniqueItemCount = items.length;
+
   return (
-    <header className="w-full border-b border-gray-200 bg-white">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <div className="flex items-center">
-          <img
-            src="img/logo.png"
-            alt="Kompra.ph"
-            className="h-10 w-auto"
-          />
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div className="container-shell flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between">
+        
+        {/* Logo Section */}
+        <div className="flex items-center justify-between gap-4">
+          <Link href="/home" className="text-2xl font-extrabold text-[#07245e]">
+            Kumpra.ph
+          </Link>
         </div>
 
-        <div className="mx-6 hidden max-w-xl flex-1 md:block">
-          <div className="relative">
-            <Search
-              size={18}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-            <input
-              type="text"
-              placeholder="Search products, stores..."
-              className="w-full rounded-xl border border-gray-200 bg-[#f8fafc] py-3 pl-11 pr-4 text-sm text-gray-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-            />
+        {/* Search & Cart Section */}
+        <div className="flex flex-1 items-center gap-2 md:max-w-3xl">
+          <div className="relative flex-1">
+            <SearchBar />
           </div>
+          
+          <Link 
+            href="/cart" 
+            className="relative rounded-xl bg-[#07245e] p-3 text-white transition-colors hover:bg-[#0a3180]"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            
+            {/* The badge now reflects the number of unique product types */}
+            {uniqueItemCount > 0 && (
+              <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[11px] font-bold text-white ring-2 ring-white">
+                {uniqueItemCount > 99 ? "99+" : uniqueItemCount}
+              </span>
+            )}
+          </Link>
         </div>
 
         <nav className="flex items-center gap-6 text-sm">
