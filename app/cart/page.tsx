@@ -1,38 +1,137 @@
+"use client"; // Must be a client component to use the store hooks
+
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Link from "next/link";
-import { products } from "@/data/products";
+import { Trash2, Minus, Plus, ShoppingBag } from "lucide-react";
+import { useCart } from "@/store/useCart"; // Import your Zustand store
 import { discountedPrice, formatPrice } from "@/lib/utils";
 
 export default function CartPage() {
-  const items = products.slice(0, 2);
-  const total = items.reduce((sum, item) => sum + discountedPrice(item.price, item.discountPercent), 0);
+  // 1. Grab the state and actions from your store
+  const { items, removeItem, updateQuantity } = useCart();
+
+  // 2. Calculate the actual subtotal based on items in cart
+  const subtotal = items.reduce((acc, item) => {
+    const price = discountedPrice(item.price, item.discountPercent);
+    return acc + price * item.quantity;
+  }, 0);
+
+  // 3. Handle the "Empty Cart" state gracefully
+  if (items.length === 0) {
+    return (
+      <main className="min-h-screen bg-white">
+        <Header />
+        <section className="container-shell flex flex-col items-center justify-center py-32 text-center">
+          <div className="rounded-full bg-slate-50 p-6">
+            <ShoppingBag className="h-12 w-12 text-slate-300" />
+          </div>
+          <h1 className="mt-6 font-serif text-3xl font-bold text-slate-900">Your cart is empty</h1>
+          <p className="mt-2 text-slate-500">Looks like you haven't added anything to your cart yet.</p>
+          <Link 
+            href="/" 
+            className="mt-8 rounded-lg bg-[#3a9688] px-8 py-3 font-bold text-white transition-all hover:shadow-lg"
+          >
+            Start Shopping
+          </Link>
+        </section>
+        <Footer />
+      </main>
+    );
+  }
 
   return (
-    <main>
+    <main className="min-h-screen bg-white">
       <Header />
-      <section className="container-shell py-8">
-        <h1 className="text-3xl font-bold text-[#07245e]">Your Cart</h1>
-        <div className="mt-8 grid gap-8 lg:grid-cols-[2fr_1fr]">
+      <section className="container-shell py-12">
+        <h1 className="font-serif text-3xl font-bold text-slate-900">Shopping Cart</h1>
+        
+        <div className="mt-8 grid gap-8 lg:grid-cols-[1.8fr_1fr] items-start">
+          
+          {/* Cart Items List */}
           <div className="space-y-4">
             {items.map((item) => (
-              <div key={item.id} className="card flex items-center justify-between gap-4 p-5">
-                <div>
-                  <p className="font-semibold text-[#07245e]">{item.name}</p>
-                  <p className="text-sm text-slate-500">Quantity: 1</p>
+              <div key={item.id} className="flex gap-4 rounded-xl border border-slate-100 p-4 shadow-sm">
+                {/* Product Image */}
+                <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-slate-50">
+                   <img 
+                    src={item.image || "/img/placeholder.jpg"} 
+                    alt={item.name} 
+                    className="h-full w-full object-cover" 
+                   />
                 </div>
-                <p className="font-bold text-orange-500">{formatPrice(discountedPrice(item.price, item.discountPercent))}</p>
+
+                {/* Item Details */}
+                <div className="flex flex-1 flex-col justify-between">
+                  <div>
+                    <h3 className="font-bold text-slate-900">{item.name}</h3>
+                    <p className="text-xs text-slate-400">Downtown Fresh Market</p>
+                    <p className="mt-1 font-bold text-slate-900">
+                      {formatPrice(discountedPrice(item.price, item.discountPercent))}
+                    </p>
+                  </div>
+
+                  {/* Quantity Controls - Connected to updateQuantity */}
+                  <div className="mt-3 flex w-fit items-center rounded-lg border border-slate-200 p-1">
+                    <button 
+                      onClick={() => updateQuantity(item.id, -1)}
+                      className="p-1 text-slate-400 hover:text-black transition-colors"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <span className="px-4 text-sm font-semibold">{item.quantity}</span>
+                    <button 
+                      onClick={() => updateQuantity(item.id, 1)}
+                      className="p-1 text-slate-400 hover:text-black transition-colors"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Remove Button - Connected to removeItem */}
+                <div className="flex items-end pb-1">
+                  <button 
+                    onClick={() => removeItem(item.id)}
+                    className="text-slate-300 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
-          <div className="card p-5">
-            <h2 className="text-xl font-bold text-[#07245e]">Summary</h2>
-            <div className="mt-4 flex items-center justify-between">
-              <span>Total</span>
-              <span className="font-bold text-orange-500">{formatPrice(total)}</span>
+
+          {/* Order Summary Sidebar */}
+          <div className="sticky top-24 rounded-2xl border border-slate-100 p-6 shadow-sm">
+            <h2 className="font-serif text-xl font-bold text-slate-900">Order Summary</h2>
+            
+            <div className="mt-6 space-y-3 text-sm">
+              <div className="flex justify-between text-slate-400">
+                <span>Subtotal</span>
+                <span className="font-semibold text-slate-900">{formatPrice(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>Delivery/Pickup</span>
+                <span className="italic text-[10px]">Calculated at checkout</span>
+              </div>
             </div>
-            <Link href="/checkout" className="btn-primary mt-6 w-full">Proceed to Checkout</Link>
+
+            <div className="my-6 border-t border-slate-100 pt-6">
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-bold text-slate-900">Total</span>
+                <span className="text-xl font-bold text-[#3a9688]">{formatPrice(subtotal)}</span>
+              </div>
+            </div>
+
+            <Link 
+              href="/checkout" 
+              className="flex w-full items-center justify-center rounded-lg bg-[#3a9688] py-4 font-bold text-white shadow-md transition-all hover:bg-[#2d7a6e] active:scale-[0.98]"
+            >
+              Proceed to Checkout
+            </Link>
           </div>
+
         </div>
       </section>
       <Footer />

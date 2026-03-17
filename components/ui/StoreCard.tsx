@@ -1,44 +1,58 @@
-"use client"; // <--- Add this at the very top
+"use client";
 
 import Link from "next/link";
 import { Store } from "@/types/store";
-import { MapPin } from "lucide-react";
+import { MapPin, Clock } from "lucide-react";
+import { motion } from "framer-motion"; // Import motion
 
-export default function StoreCard({ store }: { store: Store }) {
+export default function StoreCard({ store, index = 0 }: { store: Store; index?: number }) {
   return (
-    <Link 
-      href={`/store/${store.slug}`} 
-      className="group block rounded-[2rem] border border-slate-100 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+    <motion.div
+      // Animation Settings
+      initial={{ opacity: 0, y: 20 }} // Starts invisible and 20px down
+      whileInView={{ opacity: 1, y: 0 }} // Animates when it scrolls into view
+      viewport={{ once: true }} // Only animate once
+      transition={{ 
+        duration: 0.5, 
+        delay: index * 0.1, // Stagger effect: cards appear one after another
+        ease: "easeOut" 
+      }}
     >
-      {/* THE IMAGE: Now onError will work correctly */}
-      <div className="relative mb-5 aspect-[4/3] overflow-hidden rounded-[1.5rem] bg-slate-100">
-        <img
-          src={store.banner}
-          alt={store.name}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={(e) => {
-            // This logic requires "use client"
-            (e.target as HTMLImageElement).src = "/img/fashion.jpg"; 
-          }}
-        />
-      </div>
-
-      <div className="px-1 pb-2">
-        <h3 className="text-xl font-bold text-[#07245e] transition-colors">
-          {store.name}
-        </h3>
-        
-        <p className="mt-1 text-sm font-medium text-emerald-600">
-          {store.branchName}
-        </p>
-
-        <div className="mt-4 flex items-start gap-2 text-sm text-slate-500">
-          <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-            <MapPin className="h-3 w-3" />
-          </div>
-          <span className="line-clamp-1">{store.address}</span>
+      <Link 
+        href={`/store/${store.slug}`} 
+        className="group block overflow-hidden rounded-xl border border-slate-100 bg-white transition-all hover:shadow-lg hover:border-[#3a9688]/30"
+      >
+        {/* Banner Image */}
+        <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
+          <img
+            src={store.banner}
+            alt={store.name}
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1000&auto=format&fit=crop"; 
+            }}
+          />
         </div>
-      </div>
-    </Link>
+
+        {/* Content Section */}
+        <div className="p-5">
+          <h3 className="font-serif text-xl font-bold text-slate-900 transition-colors group-hover:text-[#3a9688]">
+            {store.name}
+          </h3>
+          
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center gap-2 text-[13px] text-slate-400">
+              <MapPin className="h-4 w-4 shrink-0 text-slate-300" />
+              <span className="line-clamp-1">{store.address || "123 Main Street, Downtown"}</span>
+            </div>
+
+            <div className="flex items-center gap-2 text-[13px] text-slate-400">
+              <Clock className="h-4 w-4 shrink-0 text-slate-300" />
+              <span>8:00 AM - 9:00 PM</span>
+            </div>
+          </div>
+        </div>
+      </Link>
+    </motion.div>
   );
 }
