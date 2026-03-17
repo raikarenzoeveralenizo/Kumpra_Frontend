@@ -8,7 +8,7 @@ export default function FeaturedStores() {
     <section className="container-shell py-12">
       {/* Header with Title and View All Link */}
       <div className="flex items-center justify-between mb-8">
-        <h2 className="font-serif text-3xl font-bold text-slate-900">Our Stores</h2>
+        <h2 className="font-serif text-3xl font-bold text-slate-900">Best Selling Stores</h2>
         <Link 
           href="/stores" 
           className="flex items-center gap-1 text-sm font-semibold text-slate-600 transition-colors hover:text-black"

@@ -1,16 +1,15 @@
-"use client"; // Required to use the useCart hook
+"use client";
 
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import SearchBar from "@/components/ui/SearchBar";
-import { useCart } from "@/store/useCart"; // Import your store
+import { useCart } from "@/store/useCart";
 
 export default function Header() {
-  // Get the items from the store
   const items = useCart((state) => state.items);
   
-  // Calculate total quantity (sum of all item quantities)
-  const itemCount = items.reduce((total, item) => total + item.quantity, 0);
+  // CHANGE: Only count unique items in the array
+  const uniqueItemCount = items.length;
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
@@ -35,10 +34,10 @@ export default function Header() {
           >
             <ShoppingCart className="h-5 w-5" />
             
-            {/* Cart Badge - Only shows if itemCount > 0 */}
-            {itemCount > 0 && (
+            {/* The badge now reflects the number of unique product types */}
+            {uniqueItemCount > 0 && (
               <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[11px] font-bold text-white ring-2 ring-white">
-                {itemCount > 99 ? "99+" : itemCount}
+                {uniqueItemCount > 99 ? "99+" : uniqueItemCount}
               </span>
             )}
           </Link>
