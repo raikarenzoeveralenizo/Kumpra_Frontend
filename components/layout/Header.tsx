@@ -42,28 +42,6 @@ export default function Header() {
             )}
           </Link>
         </div>
-
-        <nav className="flex items-center gap-6 text-sm">
-          <a href="#" className="font-medium text-gray-600 transition hover:text-black">
-            Products
-          </a>
-
-          <a href="#" className="font-medium text-gray-600 transition hover:text-black">
-            Stores
-          </a>
-
-          <button
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition hover:bg-gray-100 hover:text-black"
-            aria-label="Cart"
-          >
-            <ShoppingCart size={22} />
-          </button>
-
-          <button className="inline-flex items-center gap-2 rounded-xl border border-gray-300 px-4 py-2 text-[15px] font-medium text-gray-900 transition hover:bg-gray-50">
-            <User size={18} />
-            Login
-          </button>
-        </nav>
       </div>
     </header>
   );
