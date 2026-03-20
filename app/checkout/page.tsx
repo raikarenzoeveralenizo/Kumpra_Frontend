@@ -9,52 +9,57 @@ import CheckoutSummary from "@/sections/checkout/CheckoutSummary";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { Truck, Store, X, MapPin } from "lucide-react";
+import { useCart } from "@/store/useCart";
+import PaymentMethod from "@/components/checkout/PaymentMethod";
 
 export default function CheckoutPage() {
   const [mode, setMode] = useState<"delivery" | "pickup" | null>(null);
   const [selectedStore, setSelectedStore] = useState<any | null>(null);
+  const { items } = useCart();
 
   return (
     <main className="min-h-screen bg-white">
       <Header />
       
-      <section className="container-shell py-12">
-        <h1 className="text-4xl font-serif font-bold text-brand-blue tracking-tight">Checkout</h1>
+      <section className="container-shell py-8">
+        <h1 className="text-3xl font-serif font-bold text-brand-blue tracking-tight md:text-[32px]">
+          Checkout
+        </h1>
 
-        <div className="mt-10 grid gap-10 lg:grid-cols-[2fr_1fr]">
+        <div className="mt-8 grid gap-8 lg:grid-cols-[2fr_1fr]">
           
-          <div className="space-y-10">
+          <div className="space-y-8">
             {/* Receiving Mode Selection */}
-            <div className="space-y-6">
-               <h3 className="text-xl font-serif font-bold text-brand-blue">
+            <div className="space-y-5">
+               <h3 className="text-lg font-serif font-bold text-brand-blue">
                  How would you like to receive your order?
                </h3>
                
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                  <button 
                    onClick={() => setMode("delivery")}
-                   className={`flex flex-col gap-2 rounded-2xl border-2 p-6 text-left transition-all ${
+                   className={`flex flex-col gap-1.5 rounded-xl border-2 p-4 text-left transition-all ${
                      mode === "delivery" 
                       ? "border-[#3a9688] bg-[#f8faf9]" 
                       : "border-slate-100 bg-white hover:border-slate-200"
                    }`}
                  >
-                   <Truck className={`h-8 w-8 ${mode === "delivery" ? "text-[#3a9688]" : "text-slate-400"}`} />
-                   <span className="text-lg font-bold text-brand-blue">Delivery</span>
-                   <span className="text-sm font-medium text-slate-400">Delivered to your address</span>
+                   <Truck className={`h-6 w-6 ${mode === "delivery" ? "text-[#3a9688]" : "text-slate-400"}`} />
+                   <span className="text-base font-bold text-brand-blue">Delivery</span>
+                   <span className="text-xs font-medium text-slate-400">Delivered to your address</span>
                  </button>
 
                  <button 
                    onClick={() => setMode("pickup")}
-                   className={`flex flex-col gap-2 rounded-2xl border-2 p-6 text-left transition-all ${
+                   className={`flex flex-col gap-1.5 rounded-xl border-2 p-4 text-left transition-all ${
                      mode === "pickup" 
                       ? "border-[#3a9688] bg-[#f8faf9]" 
                       : "border-slate-100 bg-white hover:border-slate-200"
                    }`}
                  >
-                   <Store className={`h-8 w-8 ${mode === "pickup" ? "text-[#3a9688]" : "text-slate-400"}`} />
-                   <span className="text-lg font-bold text-brand-blue">Pickup</span>
-                   <span className="text-sm font-medium text-slate-400">Pick up at a store near you</span>
+                   <Store className={`h-6 w-6 ${mode === "pickup" ? "text-[#3a9688]" : "text-slate-400"}`} />
+                   <span className="text-base font-bold text-brand-blue">Pickup</span>
+                   <span className="text-xs font-medium text-slate-400">Pick up at a store near you</span>
                  </button>
                </div>
             </div>
@@ -67,15 +72,14 @@ export default function CheckoutPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="space-y-8"
+                  className="space-y-6"
                 >
-                  <div className="border-t border-slate-100 pt-8">
-                    <h3 className="text-2xl font-serif font-bold text-brand-blue mb-6 tracking-tight">Delivery Address</h3>
-                    <div className="rounded-2xl border border-slate-100 p-1 bg-white">
+                  <div className="border-t border-slate-100 pt-6">
+                    <div className="rounded-xl border border-slate-100 bg-white p-1">
                        <DeliveryAddressForm />
                     </div>
                   </div>
-                  <PaymentSection />
+                  <PaymentMethod />
                 </motion.div>
               )}
 
@@ -86,17 +90,15 @@ export default function CheckoutPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="space-y-8"
+                  className="space-y-6"
                 >
-                  <div className="border-t border-slate-100 pt-8">
-                    <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-2xl font-serif font-bold text-brand-blue tracking-tight">
-                        {selectedStore ? "Your Selected Branch" : "Select Pickup Branch"}
-                      </h3>
+                  <div className="border-t border-slate-100 pt-6">
+                    <div className="mb-4 flex items-center justify-between">
+                    
                       {selectedStore && (
                         <button 
                           onClick={() => setSelectedStore(null)}
-                          className="text-xs font-bold text-[#3a9688] hover:underline flex items-center gap-1"
+                          className="flex items-center gap-1 text-[11px] font-bold text-[#3a9688] hover:underline"
                         >
                           <X className="h-3 w-3" /> Change Branch
                         </button>
@@ -108,16 +110,20 @@ export default function CheckoutPage() {
                       <motion.div 
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="mb-6 rounded-2xl border-2 border-[#3a9688] bg-[#f8faf9] p-6 flex items-center gap-4"
+                        className="mb-4 flex items-center gap-3 rounded-xl border-2 border-[#3a9688] bg-[#f8faf9] p-4"
                       >
-                        <div className="h-12 w-12 rounded-full bg-[#3a9688] flex items-center justify-center shadow-sm text-white">
-                          <Store className="h-6 w-6" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#3a9688] text-white shadow-sm">
+                          <Store className="h-5 w-5" />
                         </div>
                         <div className="flex-1">
-                          <p className="text-lg font-bold text-brand-blue leading-tight">{selectedStore.name}</p>
-                          <p className="text-sm text-slate-500 mt-1">{selectedStore.address}</p>
+                          <p className="text-base font-bold leading-tight text-brand-blue">
+                            {selectedStore.name}
+                          </p>
+                          <p className="mt-0.5 text-xs text-slate-500">
+                            {selectedStore.address}
+                          </p>
                         </div>
-                        <MapPin className="h-5 w-5 text-[#3a9688] opacity-40" />
+                        <MapPin className="h-4 w-4 text-[#3a9688] opacity-40" />
                       </motion.div>
                     )}
 
@@ -128,8 +134,8 @@ export default function CheckoutPage() {
                     />
                   </div>
                   
-                  <div className="rounded-xl bg-slate-50 p-6 border border-dashed border-slate-200">
-                    <p className="text-sm text-slate-500 text-center font-medium">
+                  <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4">
+                    <p className="text-center text-xs font-medium text-slate-500">
                       Payment for pickup orders will be settled at the store branch.
                     </p>
                   </div>
@@ -139,14 +145,14 @@ export default function CheckoutPage() {
           </div>
 
           <div className="relative">
-            <div className="sticky top-24 space-y-6">
-              <CheckoutSummary />
+            <div className="sticky top-24 space-y-4">
+              <CheckoutSummary items={items} />
               <Link 
                 href={(mode === "delivery" || (mode === "pickup" && selectedStore)) ? "/tracking/o1" : "#"} 
-                className={`flex w-full items-center justify-center rounded-xl py-4 text-lg font-bold text-white transition-all ${
+                className={`flex w-full items-center justify-center rounded-xl py-3 text-base font-bold text-white transition-all ${
                   (mode === "delivery" || (mode === "pickup" && selectedStore)) 
-                    ? "bg-[#3a9688] hover:bg-[#148a78] shadow-lg shadow-[#3a9688]/20" 
-                    : "bg-slate-200 cursor-not-allowed pointer-events-none"
+                    ? "bg-[#3a9688] shadow-lg shadow-[#3a9688]/20 hover:bg-[#148a78]" 
+                    : "pointer-events-none cursor-not-allowed bg-slate-200"
                 }`}
               >
                 Place Order
@@ -161,18 +167,3 @@ export default function CheckoutPage() {
   );
 }
 
-function PaymentSection() {
-  return (
-    <div className="border-t border-slate-100 pt-8">
-      <h3 className="text-2xl font-serif font-bold text-brand-blue mb-6 tracking-tight">Payment</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <button className="rounded-2xl border-2 border-orange-500 bg-orange-50/50 p-5 text-left font-bold text-brand-blue">
-          Cash on Delivery
-        </button>
-        <button className="rounded-2xl border-2 border-slate-100 p-5 text-left font-bold text-slate-400 hover:border-slate-200 transition-all">
-          Online Payment
-        </button>
-      </div>
-    </div>
-  );
-}

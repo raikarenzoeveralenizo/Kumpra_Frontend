@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useRef, useState } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Link from "next/link";
@@ -28,6 +28,7 @@ export default function ProductDetailPage({
   const product = products.find((item) => item.slug === resolvedParams.slug);
 
   const [quantity, setQuantity] = useState(1);
+  const addToCartButtonRef = useRef<HTMLButtonElement>(null);
 
   const addItem = useCart((state) => state.addItem);
   const triggerFlyToCart = useAnimationStore(
@@ -45,14 +46,14 @@ export default function ProductDetailPage({
   const increment = () => setQuantity((q) => q + 1);
   const decrement = () => setQuantity((q) => (q > 1 ? q - 1 : 1));
 
-  const handleAddToCartWithAnimation = (
-    e: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const startX = rect.left + rect.width / 2;
-    const startY = rect.top + rect.height / 2;
+  const handleAddToCartWithAnimation = () => {
+    if (addToCartButtonRef.current) {
+      const rect = addToCartButtonRef.current.getBoundingClientRect();
+      const startX = rect.left + rect.width / 2;
+      const startY = rect.top + rect.height / 2;
 
-    triggerFlyToCart(startX, startY);
+      triggerFlyToCart(startX, startY);
+    }
 
     for (let i = 0; i < quantity; i++) {
       addItem(product);
@@ -74,7 +75,6 @@ export default function ProductDetailPage({
         </Link>
 
         <div className="grid items-start gap-10 md:grid-cols-2">
-          {/* Image */}
           <div className="flex justify-center">
             <div className="w-full max-w-95 md:max-w-105 rounded-2xl bg-[#fce4ec] shadow-sm overflow-hidden">
               <div className="aspect-square">
@@ -132,7 +132,6 @@ export default function ProductDetailPage({
               {product.description}
             </p>
 
-            {/* Quantity */}
             <div className="mt-7 flex items-center gap-4">
               <span className="text-sm font-semibold text-slate-900">
                 Quantity
@@ -140,6 +139,7 @@ export default function ProductDetailPage({
 
               <div className="flex items-center rounded-md border border-slate-200 bg-white p-1 shadow-sm">
                 <button
+                  type="button"
                   onClick={decrement}
                   className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-[#de922f] hover:text-white"
                 >
@@ -151,6 +151,7 @@ export default function ProductDetailPage({
                 </span>
 
                 <button
+                  type="button"
                   onClick={increment}
                   className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-[#de922f] hover:text-white"
                 >
@@ -159,9 +160,10 @@ export default function ProductDetailPage({
               </div>
             </div>
 
-            {/* Buttons */}
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <motion.button
+                ref={addToCartButtonRef}
+                type="button"
                 whileTap={{ scale: 0.95 }}
                 onClick={handleAddToCartWithAnimation}
                 className="flex flex-1 items-center justify-center gap-2 rounded-md bg-[#3a9688] py-3.5 text-sm font-semibold text-white hover:bg-[#2d7a6e]"
@@ -178,7 +180,6 @@ export default function ProductDetailPage({
               </Link>
             </div>
 
-            {/* Store */}
             <div className="mt-7 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
               <p className="text-xs font-medium uppercase text-slate-500">
                 Sold by

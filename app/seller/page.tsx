@@ -6,7 +6,7 @@ export default function SellerPage() {
     <main>
       <Header />
       <section className="container-shell py-8">
-        <h1 className="text-3xl font-bold text-[#07245e]">Seller Dashboard</h1>
+        <h1 className="text-3xl font-bold text-brand-blue">Seller Dashboard</h1>
         <div className="mt-8 grid gap-4 md:grid-cols-4">
           {[
             ["Products", "48"],
@@ -16,7 +16,7 @@ export default function SellerPage() {
           ].map(([title, value]) => (
             <div key={title} className="card p-5">
               <p className="text-sm text-slate-500">{title}</p>
-              <p className="mt-2 text-3xl font-bold text-[#07245e]">{value}</p>
+              <p className="mt-2 text-3xl font-bold text-brand-blue">{value}</p>
             </div>
           ))}
         </div>

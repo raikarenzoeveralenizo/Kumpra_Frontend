@@ -28,8 +28,9 @@ export default function Navbar() {
 
   const mobileProfileRef = useRef<HTMLDivElement>(null);
   const desktopProfileRef = useRef<HTMLDivElement>(null);
-  const mobileCartIconRef = useRef<HTMLDivElement>(null);
-  const desktopCartIconRef = useRef<HTMLDivElement>(null);
+
+  const mobileCartIconRef = useRef<HTMLAnchorElement>(null);
+  const desktopCartIconRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     const user = localStorage.getItem("loggedInUser");
@@ -69,20 +70,24 @@ export default function Navbar() {
       const mobileEl = mobileCartIconRef.current;
       const desktopEl = desktopCartIconRef.current;
 
-      let activeEl: HTMLDivElement | null = null;
+      const isActuallyVisible = (el: HTMLAnchorElement | null) => {
+        if (!el) return false;
 
-      if (mobileEl) {
-        const mobileStyle = window.getComputedStyle(mobileEl);
-        if (mobileStyle.display !== "none") {
-          activeEl = mobileEl;
-        }
-      }
+        const rect = el.getBoundingClientRect();
 
-      if (!activeEl && desktopEl) {
-        const desktopStyle = window.getComputedStyle(desktopEl);
-        if (desktopStyle.display !== "none") {
-          activeEl = desktopEl;
-        }
+        return (
+          el.offsetParent !== null &&
+          rect.width > 0 &&
+          rect.height > 0
+        );
+      };
+
+      let activeEl: HTMLAnchorElement | null = null;
+
+      if (isActuallyVisible(mobileEl)) {
+        activeEl = mobileEl;
+      } else if (isActuallyVisible(desktopEl)) {
+        activeEl = desktopEl;
       }
 
       if (activeEl) {
@@ -92,10 +97,14 @@ export default function Navbar() {
     };
 
     measureCart();
+
+    const timeout = setTimeout(measureCart, 50);
+
     window.addEventListener("resize", measureCart);
     window.addEventListener("scroll", measureCart);
 
     return () => {
+      clearTimeout(timeout);
       window.removeEventListener("resize", measureCart);
       window.removeEventListener("scroll", measureCart);
     };
@@ -129,11 +138,11 @@ export default function Navbar() {
           <div className="flex items-center gap-2 md:hidden">
             <div className="relative">
               <motion.div
-                ref={mobileCartIconRef}
                 animate={isFlying ? { scale: [1, 1.2, 1] } : { scale: 1 }}
                 transition={{ duration: 0.4 }}
               >
                 <Link
+                  ref={mobileCartIconRef}
                   href="/cart"
                   className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-600 transition hover:bg-gray-100 hover:text-black"
                 >
@@ -225,11 +234,11 @@ export default function Navbar() {
 
             <div className="relative">
               <motion.div
-                ref={desktopCartIconRef}
                 animate={isFlying ? { scale: [1, 1.2, 1] } : { scale: 1 }}
                 transition={{ duration: 0.4 }}
               >
                 <Link
+                  ref={desktopCartIconRef}
                   href="/cart"
                   className="relative flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition hover:bg-gray-100 hover:text-black"
                 >
@@ -301,12 +310,12 @@ export default function Navbar() {
               Products
             </Link>
 
-            <a
-              href="#"
+            <Link
+              href="/stores"
               className="font-medium text-gray-600 transition hover:text-black"
             >
               Stores
-            </a>
+            </Link>
           </div>
         </div>
       </div>

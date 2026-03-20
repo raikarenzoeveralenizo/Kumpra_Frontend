@@ -129,11 +129,11 @@ export default function CartPage() {
                     
                   </div>
 
-                  {/* Remove Button - Connected to removeItem */}
+                  {/* Remove Button */}
                   <div className="flex items-end pb-1">
                     <button
                       onClick={() => removeItem(item.id)}
-                      className="text-red-500 transition-colors"
+                      className="flex h-10 w-10 items-center justify-center rounded-lg bg-transparent text-red-500 transition-all duration-200 hover:bg-[#de922f] hover:text-white"
                     >
                       <Trash2 className="h-5 w-5" />
                     </button>
