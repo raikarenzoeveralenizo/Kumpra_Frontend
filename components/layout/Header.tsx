@@ -1,52 +1,314 @@
-import { Search, ShoppingCart, User } from "lucide-react";
+"use client";
+
+import Link from "next/link";
+import { ShoppingCart, User, LogOut } from "lucide-react";
+import SearchBar from "@/components/ui/SearchBar";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCart } from "@/store/useCart";
+import { useAnimationStore } from "@/store/useAnimationStore";
+import { motion, AnimatePresence } from "framer-motion";
+
+type LoggedInUser = {
+  fullName?: string;
+  email?: string;
+};
 
 export default function Navbar() {
-  return (
-    <header className="w-full border-b border-gray-200 bg-white">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <div className="flex items-center">
-          <img
-            src="/logo.png"
-            alt="Kompra.ph"
-            className="h-10 w-auto"
-          />
-        </div>
+  const router = useRouter();
 
-        <div className="mx-6 hidden max-w-xl flex-1 md:block">
-          <div className="relative">
-            <Search
-              size={18}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+  const items = useCart((state) => state.items);
+  const uniqueItemCount = items.length;
+
+  const isFlying = useAnimationStore((state) => state.isFlying);
+  const setEndCoords = useAnimationStore((state) => state.setEndCoords);
+
+  const [loggedInUser, setLoggedInUser] = useState<LoggedInUser | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const mobileProfileRef = useRef<HTMLDivElement>(null);
+  const desktopProfileRef = useRef<HTMLDivElement>(null);
+  const mobileCartIconRef = useRef<HTMLDivElement>(null);
+  const desktopCartIconRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const user = localStorage.getItem("loggedInUser");
+    if (user) {
+      setLoggedInUser(JSON.parse(user));
+    }
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
+      const target = event.target as Node;
+
+      const clickedOutsideMobile =
+        mobileProfileRef.current &&
+        !mobileProfileRef.current.contains(target);
+
+      const clickedOutsideDesktop =
+        desktopProfileRef.current &&
+        !desktopProfileRef.current.contains(target);
+
+      if (clickedOutsideMobile && clickedOutsideDesktop) {
+        setIsProfileOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    const measureCart = () => {
+      const mobileEl = mobileCartIconRef.current;
+      const desktopEl = desktopCartIconRef.current;
+
+      let activeEl: HTMLDivElement | null = null;
+
+      if (mobileEl) {
+        const mobileStyle = window.getComputedStyle(mobileEl);
+        if (mobileStyle.display !== "none") {
+          activeEl = mobileEl;
+        }
+      }
+
+      if (!activeEl && desktopEl) {
+        const desktopStyle = window.getComputedStyle(desktopEl);
+        if (desktopStyle.display !== "none") {
+          activeEl = desktopEl;
+        }
+      }
+
+      if (activeEl) {
+        const rect = activeEl.getBoundingClientRect();
+        setEndCoords(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      }
+    };
+
+    measureCart();
+    window.addEventListener("resize", measureCart);
+    window.addEventListener("scroll", measureCart);
+
+    return () => {
+      window.removeEventListener("resize", measureCart);
+      window.removeEventListener("scroll", measureCart);
+    };
+  }, [setEndCoords]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("loggedInUser");
+    setLoggedInUser(null);
+    setIsProfileOpen(false);
+    router.push("/login");
+  };
+
+  const displayName =
+    loggedInUser?.fullName || loggedInUser?.email || "Profile";
+
+  return (
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 md:flex-row md:items-center md:justify-between md:gap-4 md:py-4">
+        
+        {/* Top Row */}
+        <div className="flex items-center justify-between gap-3">
+          <Link href="/home" className="flex shrink-0 items-center">
+            <img
+              src="/img/logo.png"
+              alt="Kompra.ph"
+              className="h-8 w-auto sm:h-10"
             />
-            <input
-              type="text"
-              placeholder="Search products, stores..."
-              className="w-full rounded-xl border border-gray-200 bg-[#f8fafc] py-3 pl-11 pr-4 text-sm text-gray-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-            />
+          </Link>
+
+          {/* Mobile Actions */}
+          <div className="flex items-center gap-2 md:hidden">
+            <div className="relative">
+              <motion.div
+                ref={mobileCartIconRef}
+                animate={isFlying ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+                transition={{ duration: 0.4 }}
+              >
+                <Link
+                  href="/cart"
+                  className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-600 transition hover:bg-gray-100 hover:text-black"
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                </Link>
+              </motion.div>
+
+              <AnimatePresence>
+                {uniqueItemCount > 0 && (
+                  <motion.span
+                    key="mobile-cart-badge"
+                    initial={{ scale: 0 }}
+                    animate={isFlying ? { scale: [1, 1.4, 1] } : { scale: 1 }}
+                    className="pointer-events-none absolute -right-1 -top-1 z-10 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white ring-2 ring-white"
+                  >
+                    {uniqueItemCount > 99 ? "99+" : uniqueItemCount}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {loggedInUser ? (
+              <div className="relative" ref={mobileProfileRef}>
+                <button
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="inline-flex max-w-40 items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900"
+                >
+                  <User size={18} />
+                  <span className="truncate">{displayName}</span>
+                </button>
+
+                {isProfileOpen && (
+                  <div className="absolute right-0 top-full z-9999 mt-2 w-44 rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="block rounded-lg px-3 py-2 text-sm text-slate-700 transition hover:bg-gray-100"
+                    >
+                      View Profile
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-red-600 transition hover:bg-red-50"
+                    >
+                      <LogOut size={16} />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900 transition hover:bg-[#de922f] hover:text-white"
+              >
+                <User size={18} />
+                <span className="hidden xs:inline">Login</span>
+              </Link>
+            )}
           </div>
         </div>
 
-        <nav className="flex items-center gap-6 text-sm">
-          <a href="#" className="font-medium text-gray-600 transition hover:text-black">
-            Products
-          </a>
+        {/* Right / Bottom Section */}
+        <div className="flex flex-col gap-3 md:flex-1 md:flex-row md:items-center md:justify-end">
+          
+          {/* Search */}
+          <div className="w-full md:mx-6 md:max-w-xl">
+            <div className="relative w-full">
+              <SearchBar />
+            </div>
+          </div>
 
-          <a href="#" className="font-medium text-gray-600 transition hover:text-black">
-            Stores
-          </a>
+          {/* Desktop Nav */}
+          <nav className="hidden items-center gap-6 text-sm md:flex">
+            <Link
+              href="/products"
+              className="font-medium text-gray-600 transition hover:text-black"
+            >
+              Products
+            </Link>
 
-          <button
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition hover:bg-gray-100 hover:text-black"
-            aria-label="Cart"
-          >
-            <ShoppingCart size={22} />
-          </button>
+            <Link
+              href="/stores"
+              className="font-medium text-gray-600 transition hover:text-black"
+            >
+              Stores
+            </Link>
 
-          <button className="inline-flex items-center gap-2 rounded-xl border border-gray-300 px-4 py-2 text-[15px] font-medium text-gray-900 transition hover:bg-gray-50">
-            <User size={18} />
-            Login
-          </button>
-        </nav>
+            <div className="relative">
+              <motion.div
+                ref={desktopCartIconRef}
+                animate={isFlying ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+                transition={{ duration: 0.4 }}
+              >
+                <Link
+                  href="/cart"
+                  className="relative flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition hover:bg-gray-100 hover:text-black"
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                </Link>
+              </motion.div>
+
+              <AnimatePresence>
+                {uniqueItemCount > 0 && (
+                  <motion.span
+                    key="desktop-cart-badge"
+                    initial={{ scale: 0 }}
+                    animate={isFlying ? { scale: [1, 1.4, 1] } : { scale: 1 }}
+                    className="pointer-events-none absolute -right-2 -top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[11px] font-bold text-white ring-2 ring-white"
+                  >
+                    {uniqueItemCount > 99 ? "99+" : uniqueItemCount}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {loggedInUser ? (
+              <div className="relative" ref={desktopProfileRef}>
+                <button
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900"
+                >
+                  <User size={18} />
+                  <span className="max-w-35 truncate">{displayName}</span>
+                </button>
+
+                {isProfileOpen && (
+                  <div className="absolute right-0 z-50 mt-2 w-48 rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="block rounded-lg px-3 py-2 text-sm text-slate-700 transition hover:bg-gray-100"
+                    >
+                      View Profile
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-red-600 transition hover:bg-red-50"
+                    >
+                      <LogOut size={16} />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-[#de922f] hover:text-white"
+              >
+                <User size={18} />
+                Login
+              </Link>
+            )}
+          </nav>
+
+          {/* Mobile Links */}
+          <div className="flex items-center justify-center gap-6 border-t border-slate-200 pt-2 text-sm md:hidden">
+            <Link
+              href="/products"
+              className="font-medium text-gray-600 transition hover:text-black"
+            >
+              Products
+            </Link>
+
+            <a
+              href="#"
+              className="font-medium text-gray-600 transition hover:text-black"
+            >
+              Stores
+            </a>
+          </div>
+        </div>
       </div>
     </header>
   );

@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function LandingHero() {
   return (
-    <section className="bg-gradient-to-r from-[#edf4f2] to-[#f6f1e9]">
+    <section className="bg-linear-to-r from-[#edf4f2] to-[#f6f1e9]">
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-5 py-10 sm:px-6 sm:py-12 md:gap-12 lg:grid-cols-2 lg:px-10 lg:py-20">
         <div className="max-w-3xl text-center lg:text-left">
           <h1 className="font-serif text-[34px] font-semibold leading-[1.08] tracking-[-0.02em] text-[#111827] sm:text-[42px] md:text-[48px] lg:text-[56px]">
@@ -13,7 +13,7 @@ export default function LandingHero() {
             <br />
           </h1>
 
-          <p className="mx-auto mt-5 max-w-[640px] text-[15px] leading-7 text-[#667085] sm:mt-6 sm:text-[16px] sm:leading-8 lg:mx-0 lg:mt-7 lg:text-[17px]">
+          <p className="mx-auto mt-5 max-w-160 text-[15px] leading-7 text-[#667085] sm:mt-6 sm:text-[16px] sm:leading-8 lg:mx-0 lg:mt-7 lg:text-[17px]">
             Shop from your favorite local stores. Choose delivery to your
             door or pick up at a store near you.
           </p>
@@ -24,14 +24,14 @@ export default function LandingHero() {
               <span className="text-base sm:text-lg">→</span>
             </button>
 
-            <button className="w-full rounded-xl border border-[#d0d5dd] bg-[#f9fafb] px-6 py-3 text-[15px] font-semibold text-[#111827] transition hover:bg-white sm:w-auto sm:px-8 sm:py-3.5 sm:text-[16px] lg:px-9 lg:text-[17px]">
+            <button className="w-full rounded-xl border border-[#d0d5dd] bg-[#f9fafb] px-6 py-3 text-[15px] font-semibold text-[#111827] transition hover:bg-[#de922f] hover:text-white sm:w-auto sm:px-8 sm:py-3.5 sm:text-[16px] lg:px-9 lg:text-[17px]">
               Browse Stores
             </button>
           </div>
         </div>
 
         <div className="relative flex justify-center lg:justify-end">
-          <div className="relative w-full max-w-[620px] overflow-hidden rounded-[20px] border border-white/60 bg-white/40 p-2 shadow-[0_16px_40px_rgba(17,24,39,0.10)] backdrop-blur-sm sm:rounded-[24px] sm:p-3 lg:rounded-[32px]">
+          <div className="relative w-full max-w-155 overflow-hidden rounded-[20px] border border-white/60 bg-white/40 p-2 shadow-[0_16px_40px_rgba(17,24,39,0.10)] backdrop-blur-sm sm:rounded-3xl sm:p-3 lg:rounded-4xl">
             <div className="absolute -left-4 -top-4 h-16 w-16 rounded-full bg-[#2f8f83]/15 blur-2xl sm:-left-6 sm:-top-6 sm:h-24 sm:w-24" />
             <div className="absolute -bottom-5 -right-5 h-20 w-20 rounded-full bg-[#de922f]/20 blur-2xl sm:-bottom-8 sm:-right-8 sm:h-28 sm:w-28" />
 
@@ -40,7 +40,7 @@ export default function LandingHero() {
               alt="Kompra ecommerce"
               width={900}
               height={700}
-              className="relative z-10 h-auto w-full rounded-[16px] object-cover sm:rounded-[20px] lg:rounded-[24px]"
+              className="relative z-10 h-auto w-full rounded-2xl object-cover sm:rounded-[20px] lg:rounded-3xl"
               priority
             />
           </div>

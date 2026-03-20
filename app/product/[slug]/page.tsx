@@ -1,106 +1,205 @@
+"use client";
+
+import { use, useState } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Link from "next/link";
-import { ChevronLeft, ShoppingCart, MapPin, Minus, Plus, Star } from "lucide-react";
+import {
+  ChevronLeft,
+  ShoppingCart,
+  MapPin,
+  Minus,
+  Plus,
+  Star,
+} from "lucide-react";
 import { products } from "@/data/products";
 import { stores } from "@/data/stores";
 import { discountedPrice, formatPrice } from "@/lib/utils";
+import { useCart } from "@/store/useCart";
+import { useAnimationStore } from "@/store/useAnimationStore";
+import { motion } from "framer-motion";
 
-export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const product = products.find((item) => item.slug === slug);
+export default function ProductDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const resolvedParams = use(params);
+  const product = products.find((item) => item.slug === resolvedParams.slug);
 
-  if (!product) return <div>Product not found</div>;
+  const [quantity, setQuantity] = useState(1);
+
+  const addItem = useCart((state) => state.addItem);
+  const triggerFlyToCart = useAnimationStore(
+    (state) => state.triggerFlyToCart
+  );
+
+  if (!product) {
+    return <div className="p-20 text-center text-slate-500">Product not found</div>;
+  }
 
   const store = stores.find((item) => item.id === product.storeId);
+  const finalPrice = discountedPrice(product.price, product.discountPercent);
+  const savings = product.price - finalPrice;
+
+  const increment = () => setQuantity((q) => q + 1);
+  const decrement = () => setQuantity((q) => (q > 1 ? q - 1 : 1));
+
+  const handleAddToCartWithAnimation = (
+    e: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const startX = rect.left + rect.width / 2;
+    const startY = rect.top + rect.height / 2;
+
+    triggerFlyToCart(startX, startY);
+
+    for (let i = 0; i < quantity; i++) {
+      addItem(product);
+    }
+  };
+
+  const buyNowUrl = `/checkout?directBuy=true&productId=${product.id}&qty=${quantity}`;
 
   return (
-    <main className="bg-white min-h-screen">
+    <main className="min-h-screen bg-white">
       <Header />
-      
-      <section className="container-shell py-8">
-        {/* Back Button */}
-        <Link href="/home" className="flex items-center gap-1 text-xs text-slate-500 hover:text-black mb-6">
-          <ChevronLeft className="h-3 w-3" /> Back
+
+      <section className="container-shell py-7">
+        <Link
+          href="/home"
+          className="mb-6 flex items-center gap-1 text-sm text-slate-500 transition-colors hover:text-brand-blue"
+        >
+          <ChevronLeft className="h-4 w-4" /> Back
         </Link>
 
-        <div className="grid gap-12 md:grid-cols-2 items-start">
-          {/* Image Placeholder - Matching the Pink/Soft background look */}
-          <div className="rounded-3xl bg-[#fce4ec] flex items-center justify-center overflow-hidden" style={{ minHeight: 500 }}>
-             {/* Replace with <Image src={product.image} /> when ready */}
-             <span className="text-slate-400 italic">Product Image</span>
+        <div className="grid items-start gap-10 md:grid-cols-2">
+          {/* Image */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-95 md:max-w-105 rounded-2xl bg-[#fce4ec] shadow-sm overflow-hidden">
+              <div className="aspect-square">
+                {product.image ? (
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-slate-400 italic">
+                    Product Image
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Product Info */}
           <div className="flex flex-col">
-            <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">{product.category || "Fruits & Vegetables"}</p>
-            <h1 className="mt-2 text-4xl font-serif font-bold text-slate-900">{product.name}</h1>
-            
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {product.category}
+            </p>
+
+            <h1 className="mt-2 text-3xl font-serif font-bold tracking-tight text-brand-blue md:text-4xl">
+              {product.name}
+            </h1>
+
             <div className="mt-2 flex items-center gap-1">
-              <Star className="h-4 w-4 fill-orange-400 text-orange-400" />
-              <span className="text-sm font-bold text-slate-700">{product.rating}</span>
-              <span className="text-sm text-slate-400">(124 reviews)</span>
+              <Star className="h-4 w-4 fill-[#de922f] text-[#de922f]" />
+              <span className="text-sm font-semibold text-slate-800">
+                {product.rating}
+              </span>
+              <span className="text-sm text-slate-500">(124 reviews)</span>
             </div>
 
-            <div className="mt-6 flex items-center gap-3">
-              <span className="text-3xl font-bold text-slate-900">
-                {formatPrice(discountedPrice(product.price, product.discountPercent))}
+            <div className="mt-5 flex items-center gap-3">
+              <span className="text-2xl font-semibold text-slate-900 md:text-3xl">
+                {formatPrice(finalPrice)}
               </span>
-              <span className="text-lg text-slate-400 line-through">
-                {formatPrice(product.price)}
-              </span>
-              <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
-                Save $4.00
-              </span>
+
+              {product.discountPercent > 0 && (
+                <span className="text-base text-slate-400 line-through">
+                  {formatPrice(product.price)}
+                </span>
+              )}
+
+              {product.discountPercent > 0 && (
+                <span className="rounded-full bg-red-500 px-3 py-0.75 text-xs font-semibold text-white">
+                  Save {formatPrice(savings)}
+                </span>
+              )}
             </div>
 
-            <p className="mt-6 text-sm leading-relaxed text-slate-500 max-w-md">
+            <p className="mt-5 max-w-md text-sm leading-relaxed text-slate-600">
               {product.description}
             </p>
 
-            {/* Quantity Selector */}
-            <div className="mt-8 flex items-center gap-4">
-              <span className="text-sm font-semibold text-slate-900">Quantity</span>
-              <div className="flex items-center rounded-lg border border-slate-200 p-1">
-                <button className="p-1 text-slate-400 hover:text-black"><Minus className="h-4 w-4" /></button>
-                <span className="px-4 font-semibold">1</span>
-                <button className="p-1 text-slate-400 hover:text-black"><Plus className="h-4 w-4" /></button>
+            {/* Quantity */}
+            <div className="mt-7 flex items-center gap-4">
+              <span className="text-sm font-semibold text-slate-900">
+                Quantity
+              </span>
+
+              <div className="flex items-center rounded-md border border-slate-200 bg-white p-1 shadow-sm">
+                <button
+                  onClick={decrement}
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-[#de922f] hover:text-white"
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+
+                <span className="px-4 text-sm font-semibold text-slate-900">
+                  {quantity}
+                </span>
+
+                <button
+                  onClick={increment}
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-[#de922f] hover:text-white"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="mt-8 flex gap-3">
-              <Link 
-                href="/cart" 
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#3a9688] py-4 font-bold text-white transition-opacity hover:opacity-90"
+            {/* Buttons */}
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleAddToCartWithAnimation}
+                className="flex flex-1 items-center justify-center gap-2 rounded-md bg-[#3a9688] py-3.5 text-sm font-semibold text-white hover:bg-[#2d7a6e]"
               >
                 <ShoppingCart className="h-5 w-5" />
                 Add to Cart
-              </Link>
-              <Link 
-                href="/checkout" 
-                className="flex flex-1 items-center justify-center rounded-lg bg-[#faf3e8] py-4 font-bold text-[#d4a373] transition-colors hover:bg-[#f5ebd8]"
+              </motion.button>
+
+              <Link
+                href={buyNowUrl}
+                className="flex flex-1 items-center justify-center rounded-md bg-[#faf3e8] py-3.5 text-sm font-medium text-[#8a5a2b] hover:bg-[#f5ebd8]"
               >
                 Buy Now
               </Link>
             </div>
 
-            {/* Store Card */}
-            <div className="mt-8 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-              <p className="text-xs text-slate-400">Sold by</p>
-              <p className="mt-1 font-bold text-slate-900">{store?.name || "Downtown Fresh Market"}</p>
-              <Link 
-                href={`/store/${store?.slug}`} 
-                className="mt-3 flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            {/* Store */}
+            <div className="mt-7 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-xs font-medium uppercase text-slate-500">
+                Sold by
+              </p>
+
+              <p className="mt-1 text-lg font-semibold text-brand-blue">
+                {store?.name}
+              </p>
+
+              <Link
+                href={`/store/${store?.slug}`}
+                className="mt-3 flex items-center justify-center gap-2 rounded-md border border-slate-200 px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50"
               >
-                <MapPin className="h-4 w-4" />
+                <MapPin className="h-4 w-4 text-slate-700" />
                 View Store Location
               </Link>
             </div>
           </div>
         </div>
       </section>
-      
+
       <Footer />
     </main>
   );

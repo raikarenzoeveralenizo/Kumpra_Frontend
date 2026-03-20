@@ -22,7 +22,7 @@ export default function DeliveryStatusCard({ status }: { status: DeliveryStatus 
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm text-slate-500">Current Status</p>
-          <h3 className="mt-1 text-xl font-bold text-[#07245e]">{statusTitles[status]}</h3>
+          <h3 className="mt-1 text-xl font-bold text-brand-blue">{statusTitles[status]}</h3>
           <p className="mt-2 text-sm text-slate-600">{statusMessages[status]}</p>
         </div>
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-orange-100 text-2xl">
