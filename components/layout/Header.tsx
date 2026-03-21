@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart, User, LogOut } from "lucide-react";
+import { ShoppingCart, User, LogOut, Sparkles } from "lucide-react";
 import SearchBar from "@/components/ui/SearchBar";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -75,11 +75,7 @@ export default function Navbar() {
 
         const rect = el.getBoundingClientRect();
 
-        return (
-          el.offsetParent !== null &&
-          rect.width > 0 &&
-          rect.height > 0
-        );
+        return el.offsetParent !== null && rect.width > 0 && rect.height > 0;
       };
 
       let activeEl: HTMLAnchorElement | null = null;
@@ -210,7 +206,7 @@ export default function Navbar() {
         <div className="flex flex-col gap-3 md:flex-1 md:flex-row md:items-center md:justify-end">
           
           {/* Search */}
-          <div className="w-full md:mx-6 md:max-w-xl">
+          <div className="w-full md:mx-3 md:max-w-md lg:max-w-lg">
             <div className="relative w-full">
               <SearchBar />
             </div>
@@ -230,6 +226,14 @@ export default function Navbar() {
               className="font-medium text-gray-600 transition hover:text-black"
             >
               Stores
+            </Link>
+
+            <Link
+              href="/ai"
+              className="inline-flex items-center gap-1.5 font-medium text-[#2f8f83] transition hover:text-[#26776d]"
+            >
+              <Sparkles className="h-4 w-4" />
+              AI
             </Link>
 
             <div className="relative">
@@ -302,7 +306,7 @@ export default function Navbar() {
           </nav>
 
           {/* Mobile Links */}
-          <div className="flex items-center justify-center gap-6 border-t border-slate-200 pt-2 text-sm md:hidden">
+          <div className="flex items-center justify-center gap-5 border-t border-slate-200 pt-2 text-sm md:hidden">
             <Link
               href="/products"
               className="font-medium text-gray-600 transition hover:text-black"
@@ -315,6 +319,14 @@ export default function Navbar() {
               className="font-medium text-gray-600 transition hover:text-black"
             >
               Stores
+            </Link>
+
+            <Link
+              href="/ai"
+              className="inline-flex items-center gap-1 text-[#2f8f83] transition hover:text-[#26776d]"
+            >
+              <Sparkles className="h-4 w-4" />
+              AI
             </Link>
           </div>
         </div>

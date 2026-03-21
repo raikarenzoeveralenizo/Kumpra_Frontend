@@ -14,7 +14,7 @@ export default function ProductsPage() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [maxPrice, setMaxPrice] = useState(1000); // Default max price
 
-  const categories = ["All", "Fruits & Vegetables", "Bakery", "Beverages", "Dairy & Eggs", "Meat & Seafood", "Pantry"];
+  const categories = ["All", "Electronics", "Fashion", "Groceries", "Sports", "Toys", "Home & Living"];
 
   // 2. Logic to Filter Products in Real-Time
   const filteredProducts = products.filter((product) => {
@@ -26,7 +26,7 @@ export default function ProductsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#f7f7f5]">
       <Header />
       <section className="container-shell py-8">
         <h1 className="font-serif text-3xl font-bold text-slate-900 mb-6">Products</h1>

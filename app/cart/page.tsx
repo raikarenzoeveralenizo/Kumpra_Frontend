@@ -46,7 +46,7 @@ export default function CartPage() {
           <h1 className="mt-6 font-serif text-3xl font-bold text-slate-900">Your cart is empty</h1>
           <p className="mt-2 text-slate-500">Looks like you haven't added anything to your cart yet.</p>
           <Link
-            href="/"
+            href="/products"
             className="mt-8 rounded-lg bg-[#3a9688] px-8 py-3 font-bold text-white transition-all hover:shadow-lg"
           >
             Start Shopping
@@ -58,9 +58,9 @@ export default function CartPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#f7f7f5]">
       <Header />
-      <section className="container-shell py-12">
+      <section className="container-shell pt-12 pb-20 md:pb-24">
         <h1 className="font-serif text-3xl font-bold text-brand-blue">Shopping Cart</h1>
 
         <div className="mt-8 grid items-start gap-8 lg:grid-cols-[1.8fr_1fr]">
@@ -73,7 +73,7 @@ export default function CartPage() {
               const activeButton = activeButtons[item.id];
 
               return (
-                <div key={item.id} className="flex gap-4 rounded-xl border border-slate-100 p-4 shadow-sm">
+                <div key={item.id} className="flex gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
                   {/* Product Image */}
                   <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-50">
                     <img

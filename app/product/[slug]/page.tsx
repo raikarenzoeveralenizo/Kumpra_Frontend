@@ -63,12 +63,12 @@ export default function ProductDetailPage({
   const buyNowUrl = `/checkout?directBuy=true&productId=${product.id}&qty=${quantity}`;
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#f7f7f5]">
       <Header />
 
       <section className="container-shell py-7">
         <Link
-          href="/home"
+          href="/products"
           className="mb-6 flex items-center gap-1 text-sm text-slate-500 transition-colors hover:text-brand-blue"
         >
           <ChevronLeft className="h-4 w-4" /> Back

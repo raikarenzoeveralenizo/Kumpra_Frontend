@@ -44,7 +44,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] lg:flex">
+    <div className="min-h-screen bg-[#f7f7f5] lg:flex">
       <AuthShowcase />
 
       <div className="flex min-h-screen w-full items-center justify-center px-4 py-6 sm:px-6 lg:w-1/2 lg:px-10">

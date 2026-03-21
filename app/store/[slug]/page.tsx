@@ -25,7 +25,7 @@ export default async function StorePage({ params }: { params: Promise<{ slug: st
   ];
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#f7f7f5]">
       <Header />
 
       <section className="container-shell py-8">
