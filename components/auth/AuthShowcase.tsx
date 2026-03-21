@@ -9,7 +9,7 @@ export default function AuthShowcase() {
       <div className="relative z-10 mx-auto max-w-md text-center">
         <div className="mx-auto mb-8 inline-flex items-center justify-center rounded-3xl bg-white/20 backdrop-blur-xl shadow-lg ring-1 ring-white/30 px-6 py-4 max-w-fit">
             <img
-                src="/img/logo.png"
+                src="/img/kompra_logo.png"
                 alt="Kompra.ph"
                 className="h-28 w-auto object-contain drop-shadow-md"
             />

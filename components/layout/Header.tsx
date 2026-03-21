@@ -124,9 +124,9 @@ export default function Navbar() {
         <div className="flex items-center justify-between gap-3">
           <Link href="/home" className="flex shrink-0 items-center">
             <img
-              src="/img/logo.png"
+              src="/img/kompra_logo.png"
               alt="Kompra.ph"
-              className="h-8 w-auto sm:h-10"
+              className="h-6 w-auto sm:h-8"
             />
           </Link>
 
