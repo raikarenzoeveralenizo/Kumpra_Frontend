@@ -6,9 +6,11 @@ export default function Footer() {
           <div className="max-w-xs">
             <div className="flex items-center gap-2">
               <span className="text-[#d98b2b] text-xl leading-none">•</span>
-              <h2 className="text-[18px] font-semibold text-[#2f8f83]">
-                Kompra.ph
-              </h2>
+              <img
+                src="/img/kompra_logo.png"
+                alt="Kompra.ph"
+                className="h-5 w-auto sm:h-6"
+              />
             </div>
 
             <p className="mt-5 text-[15px] leading-8 text-[#667085]">

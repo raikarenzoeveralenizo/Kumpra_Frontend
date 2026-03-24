@@ -4,7 +4,7 @@ import { ShoppingBag } from "lucide-react";
 export default function AuthShowcase() {
   return (
     <div className="relative hidden min-h-screen overflow-hidden lg:flex lg:w-1/2 items-center justify-center bg-[#2f8f83] px-10 text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.12),_transparent_45%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.12),transparent_45%)]" />
 
       <div className="relative z-10 mx-auto max-w-md text-center">
         <div className="mx-auto mb-8 inline-flex items-center justify-center rounded-3xl bg-white/20 backdrop-blur-xl shadow-lg ring-1 ring-white/30 px-6 py-4 max-w-fit">

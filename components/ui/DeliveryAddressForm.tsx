@@ -5,6 +5,11 @@ import dynamic from "next/dynamic";
 import { Plus, CheckCircle2, MapPin, Pencil, Trash2 } from "lucide-react";
 import AddressModal from "./AddressModal";
 
+type DeliveryAddressFormProps = {
+  selectedAddress?: AddressItem | null;
+  onSelectAddress?: (address: AddressItem | null) => void;
+};
+
 const MapView = dynamic(() => import("@/components/ui/Map"), { ssr: false });
 
 type AddressItem = {
@@ -19,7 +24,11 @@ type AddressItem = {
 
 const STORAGE_KEY = "delivery_addresses";
 
-export default function DeliveryAddressForm() {
+export default function DeliveryAddressForm({
+  selectedAddress: parentSelectedAddress,
+  onSelectAddress,
+}: DeliveryAddressFormProps) {
+
   const [addresses, setAddresses] = useState<AddressItem[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,7 +42,9 @@ export default function DeliveryAddressForm() {
       setAddresses(parsed);
 
       if (parsed.length > 0) {
-        setSelectedId(parsed[0].id);
+        const initialAddress = parentSelectedAddress || parsed[0];
+        setSelectedId(initialAddress.id);
+        onSelectAddress?.(initialAddress);
       }
     }
   }, []);
@@ -61,7 +72,10 @@ export default function DeliveryAddressForm() {
       );
 
       setAddresses(updatedAddresses);
-      setSelectedId(editingAddress.id);
+      
+      const updatedAddress =
+        updatedAddresses.find((addr) => addr.id === editingAddress.id) || null;
+      onSelectAddress?.(updatedAddress);
       setEditingAddress(null);
       setIsModalOpen(false);
       return;
@@ -79,7 +93,7 @@ export default function DeliveryAddressForm() {
 
     const updatedAddresses = [...addresses, newEntry];
     setAddresses(updatedAddresses);
-    setSelectedId(newEntry.id);
+    onSelectAddress?.(newEntry);
     setIsModalOpen(false);
   };
 
@@ -93,7 +107,9 @@ export default function DeliveryAddressForm() {
     setAddresses(updatedAddresses);
 
     if (selectedId === id) {
-      setSelectedId(updatedAddresses.length > 0 ? updatedAddresses[0].id : null);
+      const nextAddress = updatedAddresses.length > 0 ? updatedAddresses[0] : null;
+      setSelectedId(nextAddress ? nextAddress.id : null);
+      onSelectAddress?.(nextAddress);
     }
   };
 
@@ -150,7 +166,10 @@ export default function DeliveryAddressForm() {
             {addresses.map((addr) => (
               <div
                 key={addr.id}
-                onClick={() => setSelectedId(addr.id)}
+                onClick={() => {
+                  setSelectedId(addr.id);
+                  onSelectAddress?.(addr);
+                }}
                 className={`flex items-start gap-4 rounded-2xl border p-5 text-left transition-all cursor-pointer ${
                   selectedId === addr.id
                     ? "border-[#3a9688] bg-[#f8faf9] shadow-sm"
