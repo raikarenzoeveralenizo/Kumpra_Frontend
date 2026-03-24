@@ -87,3 +87,52 @@ body {
 .leaflet-tile-pane {
   opacity: 1 !important;
 }
+
+
+/* Custom Animations for Kumpra.ph */
+
+@layer utilities {
+  /* Shake Animation for Incorrect OTP */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+  }
+
+  .animate-shake {
+    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+  }
+
+  /* Smooth Entrance for Success Icons */
+  @keyframes zoom-in-fade {
+    0% {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-success {
+    animation: zoom-in-fade 0.5s ease-out forwards;
+  }
+}
+
+/* Success State Pulse (The Green Ring) */
+.success-ping {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background-color: #22c55e; /* green-500 */
+  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+  opacity: 0.2;
+}
+
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
