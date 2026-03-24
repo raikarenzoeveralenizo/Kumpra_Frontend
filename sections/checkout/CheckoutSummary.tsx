@@ -13,14 +13,18 @@ type CheckoutItem = {
 
 export default function CheckoutSummary({
   items,
+  deliveryFee = 0,
 }: {
   items: CheckoutItem[];
+  deliveryFee?: number;
 }) {
   const subtotal = items.reduce((sum, item) => {
     return (
       sum + discountedPrice(item.price, item.discountPercent || 0) * item.quantity
     );
   }, 0);
+
+  const total = subtotal + deliveryFee;
 
   return (
     <div className="card rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
@@ -77,7 +81,7 @@ export default function CheckoutSummary({
 
         <div className="flex items-center justify-between text-sm text-slate-500">
           <span>Delivery Fee</span>
-          <span>{formatPrice(0)}</span>
+          <span>{formatPrice(deliveryFee)}</span>
         </div>
 
         <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-lg font-bold text-brand-blue">

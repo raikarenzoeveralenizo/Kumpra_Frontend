@@ -16,21 +16,46 @@ const statusTitles: Record<DeliveryStatus, string> = {
   delivered: "Delivered",
 };
 
-export default function DeliveryStatusCard({ status }: { status: DeliveryStatus }) {
+// 🔥 helper: convert string → DeliveryStatus
+const normalizeStatus = (status: string): DeliveryStatus => {
+  const map: Record<string, DeliveryStatus> = {
+    "preparing item": "preparing_item",
+    "waiting for rider assign": "waiting_for_rider_assign",
+    "rider assigned": "rider_assigned",
+    "on delivery": "on_delivery",
+    "delivered": "delivered",
+  };
+
+  return map[status.toLowerCase()] || "preparing_item";
+};
+
+export default function DeliveryStatusCard({
+  status,
+}: {
+  status: DeliveryStatus | string;
+}) {
+  const normalizedStatus: DeliveryStatus =
+    typeof status === "string" ? normalizeStatus(status) : status;
+
   return (
     <div className="card p-5">
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm text-slate-500">Current Status</p>
-          <h3 className="mt-1 text-xl font-bold text-brand-blue">{statusTitles[status]}</h3>
-          <p className="mt-2 text-sm text-slate-600">{statusMessages[status]}</p>
+          <h3 className="mt-1 text-xl font-bold text-brand-blue">
+            {statusTitles[normalizedStatus]}
+          </h3>
+          <p className="mt-2 text-sm text-slate-600">
+            {statusMessages[normalizedStatus]}
+          </p>
         </div>
+
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-orange-100 text-2xl">
-          {status === "preparing_item" && <span className="animate-spin">📦</span>}
-          {status === "waiting_for_rider_assign" && <span className="animate-pulse">📡</span>}
-          {status === "rider_assigned" && <span className="animate-bounce">🛵</span>}
-          {status === "on_delivery" && <span className="animate-bounce">🚚</span>}
-          {status === "delivered" && <span>✅</span>}
+          {normalizedStatus === "preparing_item" && <span className="animate-spin">📦</span>}
+          {normalizedStatus === "waiting_for_rider_assign" && <span className="animate-pulse">📡</span>}
+          {normalizedStatus === "rider_assigned" && <span className="animate-bounce">🛵</span>}
+          {normalizedStatus === "on_delivery" && <span className="animate-bounce">🚚</span>}
+          {normalizedStatus === "delivered" && <span>✅</span>}
         </div>
       </div>
     </div>
