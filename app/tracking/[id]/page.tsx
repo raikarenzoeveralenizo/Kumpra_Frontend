@@ -107,67 +107,73 @@ export default function TrackingPage({
             </p>
           </div>
 
-          <div className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <p className="text-[11px] uppercase tracking-wide text-slate-500">
+          <div className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white px-6 py-6 shadow-sm sm:px-8">
+            <div className="grid gap-4 sm:grid-cols-2">
+
+              {/* Order Number */}
+              <div className="rounded-xl bg-slate-50 px-4 py-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                   Order Number
                 </p>
 
-                <div className="mt-1 flex items-center gap-2">
+                <div className="mt-2 flex items-center gap-2">
                   <h1 className="text-lg font-bold text-brand-blue sm:text-xl">
                     {order.orderNumber}
                   </h1>
 
                   <button
                     type="button"
-                    className="rounded p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                    className="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600"
                   >
                     <Copy className="h-4 w-4" />
                   </button>
                 </div>
               </div>
 
-              <div>
-                <p className="text-[11px] uppercase tracking-wide text-slate-500">
+              {/* Order Type */}
+              <div className="rounded-xl bg-slate-50 px-4 py-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                   Order Type
                 </p>
 
-                <div className="mt-1 flex items-center gap-2">
+                <div className="mt-2 flex items-center gap-2">
                   {isPickup ? (
                     <Store className="h-4 w-4 text-[#2f8f83]" />
                   ) : (
                     <Truck className="h-4 w-4 text-[#2f8f83]" />
                   )}
 
-                  <p className="text-sm font-semibold capitalize text-brand-blue">
+                  <p className="text-sm font-semibold text-brand-blue">
                     {isPickup ? "Pickup" : "Delivery"}
                   </p>
                 </div>
               </div>
 
-              <div>
-                <p className="text-[11px] uppercase tracking-wide text-slate-500">
+              {/* Assigned Store */}
+              <div className="rounded-xl bg-slate-50 px-4 py-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                   Assigned Store
                 </p>
 
-                <p className="mt-1 text-sm font-semibold text-brand-blue">
+                <p className="mt-2 text-sm font-semibold text-brand-blue">
                   {order.assignedStore}
                 </p>
               </div>
 
-              <div>
-                <p className="text-[11px] uppercase tracking-wide text-slate-500">
+              {/* Estimated Time */}
+              <div className="rounded-xl bg-slate-50 px-4 py-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                   Estimated Time
                 </p>
 
-                <div className="mt-1 flex items-center gap-2">
+                <div className="mt-2 flex items-center gap-2">
                   <Clock3 className="h-4 w-4 text-[#2f8f83]" />
                   <p className="text-sm font-semibold text-brand-blue">
                     {order.estimatedDeliveryTime}
                   </p>
                 </div>
               </div>
+
             </div>
           </div>
 
@@ -238,15 +244,16 @@ export default function TrackingPage({
           </>
         )}
 
-          <div className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white px-6 py-6 shadow-sm sm:px-8">
             <h3 className="text-lg font-bold text-brand-blue">Products Ordered</h3>
 
-            <div className="mt-4">
+            <div className="mt-6">
               {items.length === 0 ? (
-                <p className="text-xs text-slate-500">No ordered items found.</p>
+                <p className="text-sm text-slate-500">No ordered items found.</p>
               ) : (
                 <>
-                  <div className="space-y-3">
+                  {/* Product List */}
+                  <div className="space-y-4">
                     {items.map((item) => {
                       const unitPrice = discountedPrice(
                         item.price,
@@ -257,10 +264,10 @@ export default function TrackingPage({
                       return (
                         <div
                           key={item.id}
-                          className="flex items-center justify-between gap-3"
+                          className="flex items-center justify-between gap-4 px-2 sm:px-3"
                         >
-                          <div className="flex items-center gap-3">
-                            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                          <div className="flex items-center gap-4">
+                            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
                               <img
                                 src={item.image || "/img/placeholder.jpg"}
                                 alt={item.name}
@@ -272,16 +279,16 @@ export default function TrackingPage({
                             </div>
 
                             <div>
-                              <p className="text-base font-medium leading-tight text-brand-blue">
+                              <p className="text-base font-semibold text-brand-blue">
                                 {item.name}
                               </p>
-                              <p className="mt-0.5 text-xs text-slate-500">
+                              <p className="mt-1 text-sm text-slate-500">
                                 Qty: {item.quantity}
                               </p>
                             </div>
                           </div>
 
-                          <p className="text-lg font-semibold text-blue-brand">
+                          <p className="text-lg font-semibold text-brand-blue pr-1">
                             {formatPrice(itemTotal)}
                           </p>
                         </div>
@@ -289,33 +296,39 @@ export default function TrackingPage({
                     })}
                   </div>
 
-                  <div className="my-4 border-t border-slate-200" />
+                  {/* Divider */}
+                  <div className="my-6 border-t border-slate-200" />
 
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-slate-500">
+                  {/* Summary */}
+                  <div className="space-y-3 px-2 sm:px-3">
+                    <div className="flex items-center justify-between text-slate-600">
                       <span className="text-sm">Subtotal</span>
-                      <span className="text-sm">{formatPrice(subtotal)}</span>
+                      <span className="text-sm font-medium">{formatPrice(subtotal)}</span>
                     </div>
 
                     {!isPickup && (
-                      <div className="flex items-center justify-between text-slate-500">
+                      <div className="flex items-center justify-between text-slate-600">
                         <span className="text-sm">Delivery Fee</span>
-                        <span className="text-sm">{formatPrice(deliveryFee)}</span>
+                        <span className="text-sm font-medium">
+                          {formatPrice(deliveryFee)}
+                        </span>
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between text-slate-500">
+                    <div className="flex items-center justify-between text-slate-600">
                       <span className="text-sm">Payment</span>
-                      <span className="text-sm">
+                      <span className="text-sm font-medium">
                         {order.paymentMethod || "Cash On Delivery"}
                       </span>
                     </div>
 
-                    <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2">
-                      <span className="text-lg font-bold text-brand-blue">Total</span>
-                      <span className="text-lg font-bold text-brand-blue">
-                        {formatPrice(total)}
-                      </span>
+                    <div className="mt-3 border-t border-slate-200 pt-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-bold text-brand-blue">Total</span>
+                        <span className="text-lg font-bold text-brand-blue">
+                          {formatPrice(total)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </>
