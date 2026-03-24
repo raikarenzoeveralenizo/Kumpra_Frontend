@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Loader2 } from "lucide-react";
 import AuthShowcase from "@/components/auth/AuthShowcase";
 
 export default function LoginPage() {
@@ -12,32 +12,56 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
     if (!email || !password) {
       setError("Please fill in both email and password.");
       return;
     }
 
-    const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+    setIsLoading(true);
 
-    if (email !== storedUser.email || password !== storedUser.password) {
-      setError("Invalid email or password.");
-      return;
+    try {
+      // 1. Send Login Request to Django
+      const response = await fetch("http://localhost:8000/api/login/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // 2. Success! Store user info (and token if you have one)
+        // We store the "loggedInUser" so the Navbar/Home can show their name
+        localStorage.setItem(
+          "loggedInUser",
+          JSON.stringify({
+            fullName: data.full_name,
+            email: data.email,
+            token: data.token, // Store the token for future API calls
+          })
+        );
+
+        router.push("/home");
+      } else {
+        // 3. Handle Unauthorized/Errors
+        setError(data.non_field_errors?.[0] || "Invalid email or password.");
+      }
+    } catch (err) {
+      setError("Unable to connect to the server. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-
-    localStorage.setItem(
-      "loggedInUser",
-      JSON.stringify({
-        fullName: storedUser.fullName,
-        email: storedUser.email,
-      })
-    );
-
-    setError("");
-    router.push("/home");
   };
 
   return (
@@ -47,9 +71,7 @@ export default function LoginPage() {
       <div className="flex min-h-screen w-full items-center justify-center px-4 py-6 sm:px-6 lg:w-1/2 lg:px-10">
         <div className="w-full max-w-sm">
           <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
-            <h2 className="text-2xl font-bold text-brand-blue">
-              Welcome Back
-            </h2>
+            <h2 className="text-2xl font-bold text-[#1e3a8a]">Welcome Back</h2>
             <p className="mt-1 text-sm leading-5 text-slate-500">
               Log in to continue your shopping experience.
             </p>
@@ -68,8 +90,8 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     className={`w-full rounded-lg border py-2.5 pl-10 pr-4 text-sm outline-none transition ${
                       error
-                        ? "border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200"
-                        : "border-slate-300 focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/25"
+                        ? "border-red-500 focus:ring-red-200"
+                        : "border-slate-300 focus:border-[#2f8f83] focus:ring-[#2f8f83]/25"
                     }`}
                   />
                 </div>
@@ -88,24 +110,32 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     className={`w-full rounded-lg border py-2.5 pl-10 pr-4 text-sm outline-none transition ${
                       error
-                        ? "border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200"
-                        : "border-slate-300 focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/25"
+                        ? "border-red-500 focus:ring-red-200"
+                        : "border-slate-300 focus:border-[#2f8f83] focus:ring-[#2f8f83]/25"
                     }`}
                   />
                 </div>
               </div>
 
               {error && (
-                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 border border-red-100">
                   {error}
                 </p>
               )}
 
               <button
                 type="submit"
-                className="w-full rounded-lg bg-[#2f8f83] py-2.5 text-sm font-semibold text-white transition hover:bg-[#26776d]"
+                disabled={isLoading}
+                className="flex w-full items-center justify-center rounded-lg bg-[#2f8f83] py-2.5 text-sm font-semibold text-white transition hover:bg-[#26776d] disabled:opacity-70"
               >
-                Log In
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Logging in...
+                  </>
+                ) : (
+                  "Log In"
+                )}
               </button>
             </form>
 
