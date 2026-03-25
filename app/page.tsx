@@ -6,7 +6,7 @@ import FeatureIcons from "@/components/ui/FeatureIcons";
 
 export default function LandingPage() {
   return (
-    <main>
+    <main className="min-h-screen bg-[#f7f7f5]">
       <Header />
       <LandingHero />
       <section className="container-shell space-y-12 py-12">

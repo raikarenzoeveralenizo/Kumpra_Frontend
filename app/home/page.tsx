@@ -8,7 +8,7 @@ import HomeProducts from "@/sections/home/HomeProducts";
 
 export default function HomePage() {
   return (
-    <main>
+    <main className="min-h-screen bg-[#f7f7f5]">
       <Header />
       <section className="container-shell space-y-12 py-8">
         <BannerCarousel />

@@ -11,7 +11,7 @@ export default function CategoryGrid() {
           className="card flex flex-col items-center justify-center gap-3 p-5 text-center transition hover:-translate-y-1"
         >
           <div className="text-3xl">{category.icon}</div>
-          <span className="text-sm font-medium text-[#07245e]">{category.name}</span>
+          <span className="text-sm font-medium text-brand-blue">{category.name}</span>
         </Link>
       ))}
     </div>

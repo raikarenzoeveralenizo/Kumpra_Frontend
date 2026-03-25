@@ -4,7 +4,8 @@ import ProductGrid from "@/components/ui/ProductGrid";
 import { stores } from "@/data/stores";
 import { products } from "@/data/products";
 import StoreMap from "@/components/ui/StoreMap";
-import { MapPin, Phone, Clock } from "lucide-react"; // Matching the icons in your photo
+import StoreImageSlider from "@/components/ui/StoreImageSlider";
+import { MapPin, Phone, Clock } from "lucide-react";
 
 export default async function StorePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -14,61 +15,71 @@ export default async function StorePage({ params }: { params: Promise<{ slug: st
 
   const storeProducts = products.filter((item) => item.storeId === store.id);
 
-  // Using your specific data keys from stores.ts
-  const lat = store.latitude; 
+  const lat = store.latitude;
   const lng = store.longitude;
-  
+
+  const storeGalleryImages = [
+    store.banner,
+    store.banner,
+    store.banner,
+  ];
+
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#f7f7f5]">
       <Header />
-      
-      <section className="container-shell py-12">
-        {/* Main Grid: Left (Image) | Right (Details) */}
-        <div className="grid gap-12 lg:grid-cols-2 items-start">
+
+      <section className="container-shell py-8">
+        <div className="grid items-start gap-8 lg:grid-cols-2">
           
-          {/* LEFT: Banner Image - using store.banner from your data */}
-          <div className="overflow-hidden rounded-3xl border border-slate-100 shadow-sm">
-             <img 
-               src={store.banner} 
-               alt={store.name} 
-               className="aspect-square w-full object-cover"
-             />
+          {/* LEFT: Slider (slightly constrained width) */}
+          <div className="w-full max-w-130">
+            <StoreImageSlider 
+              images={storeGalleryImages} 
+              alt={store.name} 
+            />
           </div>
 
-          {/* RIGHT: Info & Map Container */}
+          {/* RIGHT: Info */}
           <div className="flex flex-col">
-            <h1 className="text-4xl font-bold text-slate-900 lg:text-5xl tracking-tight">
+            
+            {/* Title */}
+            <h1 className="text-2xl font-bold tracking-tight text-brand-blue md:text-3xl">
               {store.name}
             </h1>
-            
-            <div className="mt-8 space-y-5">
-              {/* Address with Emerald Icon */}
-              <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-                  <MapPin className="h-5 w-5" />
+
+            {/* Info Items */}
+            <div className="mt-6 space-y-4">
+              
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+                  <MapPin className="h-4 w-4" />
                 </div>
-                <p className="text-slate-600 font-medium">{store.address}</p>
+                <p className="text-sm font-medium text-slate-600">
+                  {store.address}
+                </p>
               </div>
 
-              {/* Phone with Emerald Icon */}
-              <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-                  <Phone className="h-5 w-5" />
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+                  <Phone className="h-4 w-4" />
                 </div>
-                <p className="text-slate-600 font-medium">{store.contactNumber}</p>
+                <p className="text-sm font-medium text-slate-600">
+                  {store.contactNumber}
+                </p>
               </div>
 
-              {/* Hours (Defaulting to match your photo style) */}
-              <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-                  <Clock className="h-5 w-5" />
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+                  <Clock className="h-4 w-4" />
                 </div>
-                <p className="text-slate-600 font-medium">8:00 AM - 9:00 PM</p>
+                <p className="text-sm font-medium text-slate-600">
+                  8:00 AM - 9:00 PM
+                </p>
               </div>
             </div>
 
-            {/* INTEGRATED MAP - Matches the light-gray placeholder in your photo */}
-            <div className="mt-10">
+            {/* Map */}
+            <div className="mt-6">
               <StoreMap 
                 lat={lat} 
                 lng={lng} 
@@ -78,7 +89,8 @@ export default async function StorePage({ params }: { params: Promise<{ slug: st
           </div>
         </div>
 
-        {/* PRODUCTS SECTION */}
+
+        {/* PRODUCTS SECTION (Unchanged) */}
         <div className="mt-20">
           <h2 className="text-2xl font-bold text-slate-900 border-b border-slate-100 pb-6">
             Available Products
