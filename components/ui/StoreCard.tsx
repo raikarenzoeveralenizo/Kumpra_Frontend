@@ -23,7 +23,7 @@ export default function StoreCard({ store, index = 0 }: { store: Store; index?: 
         className="group block overflow-hidden rounded-xl border border-slate-100 bg-white transition-all hover:shadow-lg hover:border-[#3a9688]/30"
       >
         {/* Banner Image */}
-        <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
+        <div className="relative aspect-16/10 overflow-hidden bg-slate-100">
           <img
             src={store.banner}
             alt={store.name}

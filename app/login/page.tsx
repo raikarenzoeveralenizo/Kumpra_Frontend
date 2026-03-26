@@ -26,36 +26,43 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // 1. Send Login Request to Django
       const response = await fetch("http://localhost:8000/api/login/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: email,
-          password: password,
+          email,
+          password,
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // 2. Success! Store user info (and token if you have one)
-        // We store the "loggedInUser" so the Navbar/Home can show their name
+        // 1. Store the whole user object (for UI/Navbar)
         localStorage.setItem(
           "loggedInUser",
           JSON.stringify({
-            fullName: data.full_name,
-            email: data.email,
-            token: data.token, // Store the token for future API calls
+            id: data.user.id,
+            fullName: data.user.full_name,
+            email: data.user.email,
+            phone: data.user.contact_number,
+            gender: data.user.gender,
+            birthday: data.user.date_of_birth,
+            access: data.access,
+            refresh: data.refresh,
           })
         );
 
+        // 2. CRITICAL: Store the access token separately for the Address Form
+        // Your Django LoginView returns the token in "data.access"
+        localStorage.setItem("access_token", data.access);
+        localStorage.setItem("refresh_token", data.refresh);
+
         router.push("/home");
       } else {
-        // 3. Handle Unauthorized/Errors
-        setError(data.non_field_errors?.[0] || "Invalid email or password.");
+        setError(data.error || "Invalid email or password.");
       }
     } catch (err) {
       setError("Unable to connect to the server. Please try again.");

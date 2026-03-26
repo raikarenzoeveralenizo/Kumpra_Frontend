@@ -12,12 +12,28 @@ import { Truck, Store, X, MapPin } from "lucide-react";
 import { useCart } from "@/store/useCart";
 import PaymentMethod from "@/components/checkout/PaymentMethod";
 
+type AddressItem = {
+  id: number;
+  label: string;
+  full_name: string;
+  phone: string;
+  region: string;
+  province: string;
+  city: string;
+  barangay: string;
+  street_address: string;
+  postal_code: string;
+  lat: number;
+  lng: number;
+  is_default: boolean;
+};
+
 export default function CheckoutPage() {
   const router = useRouter();
 
   const [mode, setMode] = useState<"delivery" | "pickup" | null>(null);
   const [selectedStore, setSelectedStore] = useState<any | null>(null);
-  const [selectedAddress, setSelectedAddress] = useState<any | null>(null);
+  const [selectedAddress, setSelectedAddress] = useState<AddressItem | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "online" | null>(null);
   const [onlinePaymentOption, setOnlinePaymentOption] = useState<string | null>(null);
   const [deliveryFee, setDeliveryFee] = useState(0);
@@ -39,6 +55,10 @@ export default function CheckoutPage() {
     const orderId = `o${Date.now()}`;
     const orderNumber = `KMP-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 
+    const fullAddress = selectedAddress
+      ? `${selectedAddress.street_address}, ${selectedAddress.barangay}, ${selectedAddress.city}, ${selectedAddress.province}, ${selectedAddress.region}, ${selectedAddress.postal_code}`
+      : "";
+
     const checkoutOrder = {
       id: orderId,
       orderNumber,
@@ -47,7 +67,7 @@ export default function CheckoutPage() {
       estimatedDeliveryTime: mode === "pickup" ? "15-20 mins" : "25-40 mins",
       status: mode === "pickup" ? "Preparing Item" : "Preparing for Delivery",
       currentStep: 1,
-      deliveryAddress: selectedAddress?.fullAddress || "",
+      deliveryAddress: fullAddress,
       paymentMethod:
         mode === "pickup"
           ? "Pay at Store"

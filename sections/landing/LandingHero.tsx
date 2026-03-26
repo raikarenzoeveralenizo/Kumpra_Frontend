@@ -19,14 +19,14 @@ export default function LandingHero() {
           </p>
 
           <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-4 lg:justify-start lg:mt-9">
-            <Link href="/login">
+            <Link href="/products">
               <button className="inline-flex w-full items-center justify-center gap-3 rounded-xl bg-[#2f8f83] px-6 py-3 text-[15px] font-semibold text-white transition hover:bg-[#277a6f] sm:w-auto sm:px-8 sm:py-3.5 sm:text-[16px] lg:px-9 lg:text-[17px]">
                 Shop Now
                 <span className="text-base sm:text-lg">→</span>
               </button>
             </Link>
 
-            <Link href="/login">
+            <Link href="/stores">
               <button className="w-full rounded-xl border border-[#d0d5dd] bg-[#f9fafb] px-6 py-3 text-[15px] font-semibold text-[#111827] transition hover:bg-[#de922f] hover:text-white sm:w-auto sm:px-8 sm:py-3.5 sm:text-[16px] lg:px-9 lg:text-[17px]">
                 Browse Stores
               </button>
