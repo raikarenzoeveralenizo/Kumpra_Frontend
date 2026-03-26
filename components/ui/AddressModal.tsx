@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -30,7 +29,8 @@ function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
   return null;
 }
 
-export default function AddressModal({ isOpen, onClose, onSubmit }: any) {
+// Added initialData prop here
+export default function AddressModal({ isOpen, onClose, onSubmit, initialData }: any) {
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -42,9 +42,39 @@ export default function AddressModal({ isOpen, onClose, onSubmit }: any) {
     street: "",
     label: "Home",
     isDefault: false,
-    lat: 12.8797,
-    lng: 121.7740,
+    lat: 10.3157, // Defaulting to a more central PH coord or initialData
+    lng: 123.8854,
   });
+
+  // Effect to handle "Edit" mode vs "New" mode
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setFormData({
+          fullName: initialData.full_name || initialData.name || "",
+          phone: initialData.phone || "",
+          region: { name: initialData.region || "", codes: [] },
+          province: { name: initialData.province || "", code: "" },
+          city: { name: initialData.city || "", code: "" },
+          barangay: { name: initialData.barangay || "", code: "" },
+          postalCode: initialData.postal_code || "",
+          street: initialData.street_address || initialData.fullAddress || "",
+          label: initialData.label || "Home",
+          isDefault: initialData.is_default || false,
+          lat: initialData.lat || 10.3157,
+          lng: initialData.lng || 123.8854,
+        });
+      } else {
+        // Reset form for New Address
+        setFormData({
+          fullName: "", phone: "", region: { name: "", codes: [] },
+          province: { name: "", code: "" }, city: { name: "", code: "" },
+          barangay: { name: "", code: "" }, postalCode: "", street: "",
+          label: "Home", isDefault: false, lat: 10.3157, lng: 123.8854,
+        });
+      }
+    }
+  }, [isOpen, initialData]);
 
   const [activeTab, setActiveTab] = useState("Region");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -127,7 +157,9 @@ export default function AddressModal({ isOpen, onClose, onSubmit }: any) {
           >
             {/* Header */}
             <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">New Address</h2>
+              <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">
+                {initialData ? "Edit Address" : "New Address"}
+              </h2>
               <button onClick={onClose} className="p-2 rounded-full hover:bg-white hover:shadow-sm text-slate-400 hover:text-slate-600 transition-all">
                 <X size={20} />
               </button>
@@ -138,15 +170,25 @@ export default function AddressModal({ isOpen, onClose, onSubmit }: any) {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-slate-400 uppercase ml-1">Full Name</label>
-                  <input placeholder="Juan Dela Cruz" className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-[#3a9688] focus:bg-white focus:ring-4 focus:ring-[#3a9688]/5 transition-all text-sm font-medium" onChange={e => setFormData({...formData, fullName: e.target.value})} />
+                  <input 
+                    value={formData.fullName}
+                    placeholder="Juan Dela Cruz" 
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-[#3a9688] focus:bg-white focus:ring-4 focus:ring-[#3a9688]/5 transition-all text-sm font-medium" 
+                    onChange={e => setFormData({...formData, fullName: e.target.value})} 
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-slate-400 uppercase ml-1">Phone Number</label>
-                  <input placeholder="0912 345 6789" className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-[#3a9688] focus:bg-white focus:ring-4 focus:ring-[#3a9688]/5 transition-all text-sm font-medium" onChange={e => setFormData({...formData, phone: e.target.value})} />
+                  <input 
+                    value={formData.phone}
+                    placeholder="0912 345 6789" 
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-[#3a9688] focus:bg-white focus:ring-4 focus:ring-[#3a9688]/5 transition-all text-sm font-medium" 
+                    onChange={e => setFormData({...formData, phone: e.target.value})} 
+                  />
                 </div>
               </div>
 
-              {/* Location Picker */}
+              {/* Location Picker (I kept your dropdown logic exactly as requested) */}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-slate-400 uppercase ml-1">Area Details</label>
                 <div className="relative">
@@ -230,7 +272,12 @@ export default function AddressModal({ isOpen, onClose, onSubmit }: any) {
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-slate-400 uppercase ml-1">Postal</label>
-                  <input placeholder="6000" className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-[#3a9688] focus:bg-white transition-all text-sm font-medium" onChange={e => setFormData({...formData, postalCode: e.target.value})} />
+                  <input 
+                    value={formData.postalCode}
+                    placeholder="6000" 
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-[#3a9688] focus:bg-white transition-all text-sm font-medium" 
+                    onChange={e => setFormData({...formData, postalCode: e.target.value})} 
+                  />
                 </div>
               </div>
 
@@ -252,7 +299,6 @@ export default function AddressModal({ isOpen, onClose, onSubmit }: any) {
                     <Marker position={[formData.lat, formData.lng]} icon={customIcon} />
                     <RecenterMap lat={formData.lat} lng={formData.lng} />
                   </MapContainer>
-                  <div className="absolute bottom-2 right-2 bg-white/80 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-slate-400 pointer-events-none">OpenStreetMap</div>
                 </div>
               </div>
 
@@ -284,7 +330,7 @@ export default function AddressModal({ isOpen, onClose, onSubmit }: any) {
                   onClick={() => onSubmit(formData)} 
                   className="flex-2 py-4 bg-[#f05023] hover:bg-[#d9441c] text-white font-black text-sm rounded-2xl shadow-[0_10px_20px_rgba(240,80,35,0.2)] active:scale-[0.97] transition-all"
                 >
-                  SAVE ADDRESS
+                  {initialData ? "UPDATE ADDRESS" : "SAVE ADDRESS"}
                 </button>
               </div>
             </div>

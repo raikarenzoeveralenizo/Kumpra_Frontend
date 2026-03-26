@@ -40,6 +40,7 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
+        // 1. Store the whole user object (for UI/Navbar)
         localStorage.setItem(
           "loggedInUser",
           JSON.stringify({
@@ -53,6 +54,16 @@ export default function LoginPage() {
             refresh: data.refresh,
           })
         );
+
+        // 2. CRITICAL: Store the access token separately for the Address Form
+        // Your Django LoginView returns the token in "data.access"
+        localStorage.setItem("access_token", data.access);
+        localStorage.setItem("refresh_token", data.refresh);
+
+        // 2. CRITICAL: Store the access token separately for the Address Form
+        // Your Django LoginView returns the token in "data.access"
+        localStorage.setItem("access_token", data.access);
+        localStorage.setItem("refresh_token", data.refresh);
 
         router.push("/profile");
       } else {
