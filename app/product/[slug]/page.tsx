@@ -95,7 +95,7 @@ export default function ProductDetailPage({
 
           <div className="flex flex-col">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              {product.category}
+              {product.categoryId}
             </p>
 
             <h1 className="mt-2 text-3xl font-serif font-bold tracking-tight text-brand-blue md:text-4xl">

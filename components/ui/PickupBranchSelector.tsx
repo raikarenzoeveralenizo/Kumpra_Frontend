@@ -34,7 +34,7 @@ export default function PickupBranchSelector({ onSelect, selectedStore }: Pickup
                     <p className="font-bold text-brand-blue">{store.name}</p>
                     <p className="text-sm text-slate-400 font-medium">{store.address}</p>
                     <p className="text-sm text-[#3a9688] font-bold">
-                      {store.openingHours || "8:00 AM - 9:00 PM"}
+                      {"8:00 AM - 9:00 PM"}
                     </p>
                   </div>
                 </div>

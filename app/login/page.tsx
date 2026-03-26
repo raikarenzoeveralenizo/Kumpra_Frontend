@@ -60,12 +60,7 @@ export default function LoginPage() {
         localStorage.setItem("access_token", data.access);
         localStorage.setItem("refresh_token", data.refresh);
 
-        // 2. CRITICAL: Store the access token separately for the Address Form
-        // Your Django LoginView returns the token in "data.access"
-        localStorage.setItem("access_token", data.access);
-        localStorage.setItem("refresh_token", data.refresh);
-
-        router.push("/profile");
+        router.push("/home");
       } else {
         setError(data.error || "Invalid email or password.");
       }

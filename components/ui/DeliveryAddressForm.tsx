@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import { Plus, CheckCircle2, Pencil, Trash2, Loader2 } from "lucide-react";
 import AddressModal from "./AddressModal";
 
+const MapView = dynamic(() => import("@/components/ui/Map"), { ssr: false });
+
 type AddressItem = {
   id: number;
   label: string;
@@ -27,12 +29,8 @@ type DeliveryAddressFormProps = {
   onDeliveryFeeChange?: (fee: number) => void;
 };
 
-const MapView = dynamic(() => import("@/components/ui/Map"), { ssr: false });
-
-const STORAGE_KEY = "delivery_addresses";
-
 export default function DeliveryAddressForm({
-  selectedAddress: parentSelectedAddress,
+  selectedAddress: externalSelectedAddress,
   onSelectAddress,
   onDeliveryFeeChange,
 }: DeliveryAddressFormProps) {
@@ -44,10 +42,9 @@ export default function DeliveryAddressForm({
 
   const API_URL = "http://localhost:8000/api/addresses/";
 
-  // Helper function to always get the freshest token
-  const getFreshToken = () => typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  const getFreshToken = () =>
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
 
-  // --- 1. FETCH ADDRESSES ---
   useEffect(() => {
     const fetchAddresses = async () => {
       const token = getFreshToken();
@@ -55,16 +52,35 @@ export default function DeliveryAddressForm({
         setLoading(false);
         return;
       }
+
       try {
         const res = await fetch(API_URL, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
         if (res.ok) {
           const data = await res.json();
           setAddresses(data);
+
           const defaultAddr = data.find((a: AddressItem) => a.is_default);
-          if (defaultAddr) setSelectedId(defaultAddr.id);
-          else if (data.length > 0) setSelectedId(data[0].id);
+
+          if (externalSelectedAddress) {
+            setSelectedId(externalSelectedAddress.id);
+            onSelectAddress?.(externalSelectedAddress);
+            onDeliveryFeeChange?.(50);
+          } else if (defaultAddr) {
+            setSelectedId(defaultAddr.id);
+            onSelectAddress?.(defaultAddr);
+            onDeliveryFeeChange?.(50);
+          } else if (data.length > 0) {
+            setSelectedId(data[0].id);
+            onSelectAddress?.(data[0]);
+            onDeliveryFeeChange?.(50);
+          } else {
+            setSelectedId(null);
+            onSelectAddress?.(null);
+            onDeliveryFeeChange?.(0);
+          }
         }
       } catch (err) {
         console.error("Fetch error:", err);
@@ -72,12 +88,13 @@ export default function DeliveryAddressForm({
         setLoading(false);
       }
     };
-    fetchAddresses();
-  }, []);
 
-  // --- 2. CREATE OR UPDATE ---
+    fetchAddresses();
+  }, [externalSelectedAddress, onSelectAddress, onDeliveryFeeChange]);
+
   const handleAddressSubmit = async (formData: any) => {
     const token = getFreshToken();
+
     const payload = {
       full_name: formData.fullName,
       phone: formData.phone,
@@ -107,12 +124,24 @@ export default function DeliveryAddressForm({
       });
 
       if (res.ok) {
-        // Fetch the updated list immediately
         const refreshRes = await fetch(API_URL, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
         const updatedList = await refreshRes.json();
         setAddresses(updatedList);
+
+        const updatedSelected =
+          editingAddress
+            ? updatedList.find((a: AddressItem) => a.id === editingAddress.id)
+            : updatedList.find((a: AddressItem) => a.is_default) || updatedList[updatedList.length - 1];
+
+        if (updatedSelected) {
+          setSelectedId(updatedSelected.id);
+          onSelectAddress?.(updatedSelected);
+          onDeliveryFeeChange?.(50);
+        }
+
         setIsModalOpen(false);
         setEditingAddress(null);
       }
@@ -121,7 +150,6 @@ export default function DeliveryAddressForm({
     }
   };
 
-  // --- 3. DELETE ---
   const handleDeleteAddress = async (id: number) => {
     const token = getFreshToken();
     if (!confirm("Are you sure?")) return;
@@ -133,7 +161,16 @@ export default function DeliveryAddressForm({
       });
 
       if (res.ok) {
-        setAddresses(prev => prev.filter(a => a.id !== id));
+        const updatedAddresses = addresses.filter((a) => a.id !== id);
+        setAddresses(updatedAddresses);
+
+        if (selectedId === id) {
+          const nextSelected = updatedAddresses.find((a) => a.is_default) || updatedAddresses[0] || null;
+
+          setSelectedId(nextSelected ? nextSelected.id : null);
+          onSelectAddress?.(nextSelected);
+          onDeliveryFeeChange?.(nextSelected ? 50 : 0);
+        }
       }
     } catch (err) {
       console.error("Delete error:", err);
@@ -142,15 +179,30 @@ export default function DeliveryAddressForm({
 
   const selectedAddress = addresses.find((a) => a.id === selectedId);
 
-  if (loading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin text-brand-blue" /></div>;
+  const hasValidCoords =
+    selectedAddress &&
+    !isNaN(Number(selectedAddress.lat)) &&
+    !isNaN(Number(selectedAddress.lng));
+
+  if (loading) {
+    return (
+      <div className="flex justify-center p-10">
+        <Loader2 className="animate-spin text-brand-blue" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      {/* ... Your existing JSX remains the same ... */}
       <div className="flex items-center justify-between gap-3">
-        <h3 className="font-serif text-xl font-bold tracking-tight text-brand-blue">Delivery Address</h3>
+        <h3 className="font-serif text-xl font-bold tracking-tight text-brand-blue">
+          Delivery Address
+        </h3>
         <button
-          onClick={() => { setEditingAddress(null); setIsModalOpen(true); }}
+          onClick={() => {
+            setEditingAddress(null);
+            setIsModalOpen(true);
+          }}
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-800 transition hover:bg-[#de922f] hover:text-white"
         >
           <Plus className="h-4 w-4" /> Add Address
@@ -167,28 +219,69 @@ export default function DeliveryAddressForm({
             {addresses.map((addr) => (
               <div
                 key={addr.id}
-                onClick={() => setSelectedId(addr.id)}
+                onClick={() => {
+                  setSelectedId(addr.id);
+                  onSelectAddress?.(addr);
+                  onDeliveryFeeChange?.(50);
+                }}
                 className={`flex items-start gap-4 rounded-2xl border p-5 transition-all cursor-pointer ${
                   selectedId === addr.id ? "border-[#3a9688] bg-[#f8faf9]" : "border-slate-200 bg-white"
                 }`}
               >
                 <div className="flex-1">
                   <div className="mb-2 flex items-center gap-2">
-                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-500 uppercase">{addr.label}</span>
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-500 uppercase">
+                      {addr.label}
+                    </span>
                     <p className="font-semibold text-brand-blue">{addr.full_name}</p>
                   </div>
-                  <p className="text-sm text-slate-600">{addr.street_address}, {addr.barangay}, {addr.city}</p>
+                  <p className="text-sm text-slate-600">
+                    {addr.street_address}, {addr.barangay}, {addr.city}
+                  </p>
                 </div>
+
                 <div className="flex items-center gap-2">
-                  <button onClick={(e) => { e.stopPropagation(); setEditingAddress(addr); setIsModalOpen(true); }} className="p-2 hover:text-[#de922f]"><Pencil size={16}/></button>
-                  <button onClick={(e) => { e.stopPropagation(); handleDeleteAddress(addr.id); }} className="p-2 hover:text-red-500"><Trash2 size={16}/></button>
-                  {selectedId === addr.id && <CheckCircle2 className="text-[#3a9688]" size={20} />}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingAddress(addr);
+                      setIsModalOpen(true);
+                    }}
+                    className="p-2 hover:text-[#de922f]"
+                  >
+                    <Pencil size={16} />
+                  </button>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteAddress(addr.id);
+                    }}
+                    className="p-2 hover:text-red-500"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+
+                  {selectedId === addr.id && (
+                    <CheckCircle2 className="text-[#3a9688]" size={20} />
+                  )}
                 </div>
               </div>
             ))}
           </div>
-          <div className="h-64 rounded-2xl overflow-hidden border border-slate-200">
-             <MapView lat={Number(selectedAddress?.lat)} lng={Number(selectedAddress?.lng)} label={selectedAddress?.label} />
+
+          <div className="h-64 rounded-2xl overflow-hidden border border-slate-200 bg-slate-50">
+            {hasValidCoords ? (
+              <MapView
+                lat={Number(selectedAddress.lat)}
+                lng={Number(selectedAddress.lng)}
+                label={selectedAddress.label}
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-sm text-slate-400">
+                Select an address to view location
+              </div>
+            )}
           </div>
         </>
       )}

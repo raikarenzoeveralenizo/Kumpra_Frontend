@@ -23,7 +23,7 @@ export default function StoreMap({ lat, lng, label }: StoreMapProps) {
   return (
     <div className="relative mt-6 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/50 p-1 shadow-sm transition-all hover:shadow-md">
       {/* Map Header Info (Optional - matches the Lat/Lng text in your image) */}
-      <div className="absolute bottom-4 left-1/2 z-[1000] -translate-x-1/2 rounded-full bg-white/90 px-4 py-1.5 text-[10px] font-medium text-slate-500 shadow-sm backdrop-blur-sm border border-slate-100">
+      <div className="absolute bottom-4 left-1/2 z-1000 -translate-x-1/2 rounded-full bg-white/90 px-4 py-1.5 text-[10px] font-medium text-slate-500 shadow-sm backdrop-blur-sm border border-slate-100">
         Lat: {lat.toFixed(4)}, Lng: {lng.toFixed(4)}
       </div>
 

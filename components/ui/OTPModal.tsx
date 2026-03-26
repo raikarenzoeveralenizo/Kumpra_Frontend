@@ -45,7 +45,7 @@ export default function OTPModal({ email, isOpen, onClose, onVerify }: OTPModalP
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
       <div className="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-8 shadow-2xl transition-all">
         {/* Close Button - Hidden during success animation */}
         {!isVerified && (
