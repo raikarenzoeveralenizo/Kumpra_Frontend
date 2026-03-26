@@ -32,10 +32,8 @@ export default function DeliveryAddressForm() {
 
   const API_URL = "http://localhost:8000/api/addresses/";
 
-  // Helper function to always get the freshest token
   const getFreshToken = () => typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
 
-  // --- 1. FETCH ADDRESSES ---
   useEffect(() => {
     const fetchAddresses = async () => {
       const token = getFreshToken();
@@ -63,7 +61,6 @@ export default function DeliveryAddressForm() {
     fetchAddresses();
   }, []);
 
-  // --- 2. CREATE OR UPDATE ---
   const handleAddressSubmit = async (formData: any) => {
     const token = getFreshToken();
     const payload = {
@@ -95,7 +92,6 @@ export default function DeliveryAddressForm() {
       });
 
       if (res.ok) {
-        // Fetch the updated list immediately
         const refreshRes = await fetch(API_URL, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -109,7 +105,6 @@ export default function DeliveryAddressForm() {
     }
   };
 
-  // --- 3. DELETE ---
   const handleDeleteAddress = async (id: number) => {
     const token = getFreshToken();
     if (!confirm("Are you sure?")) return;
@@ -130,11 +125,15 @@ export default function DeliveryAddressForm() {
 
   const selectedAddress = addresses.find((a) => a.id === selectedId);
 
+  // Helper to check if coordinates are valid
+  const hasValidCoords = selectedAddress && 
+                         !isNaN(Number(selectedAddress.lat)) && 
+                         !isNaN(Number(selectedAddress.lng));
+
   if (loading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin text-brand-blue" /></div>;
 
   return (
     <div className="space-y-4">
-      {/* ... Your existing JSX remains the same ... */}
       <div className="flex items-center justify-between gap-3">
         <h3 className="font-serif text-xl font-bold tracking-tight text-brand-blue">Delivery Address</h3>
         <button
@@ -175,8 +174,20 @@ export default function DeliveryAddressForm() {
               </div>
             ))}
           </div>
-          <div className="h-64 rounded-2xl overflow-hidden border border-slate-200">
-             <MapView lat={Number(selectedAddress?.lat)} lng={Number(selectedAddress?.lng)} label={selectedAddress?.label} />
+
+          {/* CRITICAL FIX: Only render MapView if we have valid coordinates */}
+          <div className="h-64 rounded-2xl overflow-hidden border border-slate-200 bg-slate-50">
+             {hasValidCoords ? (
+                <MapView 
+                  lat={Number(selectedAddress.lat)} 
+                  lng={Number(selectedAddress.lng)} 
+                  label={selectedAddress.label} 
+                />
+             ) : (
+                <div className="flex h-full w-full items-center justify-center text-sm text-slate-400">
+                  Select an address to view location
+                </div>
+             )}
           </div>
         </>
       )}
