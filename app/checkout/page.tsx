@@ -38,7 +38,7 @@ export default function CheckoutPage() {
   const [onlinePaymentOption, setOnlinePaymentOption] = useState<string | null>(null);
   const [deliveryFee, setDeliveryFee] = useState(0);
 
-  const { items } = useCart();
+  const { items, clearCart } = useCart();
 
   const canPlaceOrder =
     mode === "delivery"
@@ -80,6 +80,7 @@ export default function CheckoutPage() {
     };
 
     localStorage.setItem("latest_checkout_order", JSON.stringify(checkoutOrder));
+    clearCart();
     router.push(`/tracking/${orderId}`);
   };
 

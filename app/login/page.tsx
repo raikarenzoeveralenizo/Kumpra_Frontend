@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Mail, Lock, Loader2 } from "lucide-react";
+import { Mail, Lock, Loader2, Store, Truck } from "lucide-react";
 import AuthShowcase from "@/components/auth/AuthShowcase";
 
 export default function LoginPage() {
@@ -155,6 +155,38 @@ export default function LoginPage() {
                 Sign Up
               </Link>
             </p>
+
+
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-white px-3 text-[13px] text-slate-500">
+                    Register as a business partner
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+            <Link
+              href="/register/store-seller"
+              className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-all duration-200 hover:border-[#de922f] hover:bg-[#de922f] hover:text-white"
+            >
+              <Store className="h-4 w-4" />
+              Store Seller
+            </Link>
+
+            <Link
+              href="/register/supplier"
+              className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-all duration-200 hover:border-[#de922f] hover:bg-[#de922f] hover:text-white"
+            >
+              <Truck className="h-4 w-4" />
+              Supplier
+            </Link>
+          </div>
+            </div>
 
             <Link
               href="/"

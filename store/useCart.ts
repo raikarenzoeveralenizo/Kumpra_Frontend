@@ -11,6 +11,7 @@ interface CartStore {
   addItem: (product: Product) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, delta: number) => void;
+  clearCart: () => void;
 }
 
 export const useCart = create<CartStore>()(
@@ -36,6 +37,8 @@ export const useCart = create<CartStore>()(
           item.id === productId ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item
         ),
       })),
+
+      clearCart: () => set({ items: [] }),
     }),
     { name: 'kumpra-cart' } // Saves cart to local storage
   )
