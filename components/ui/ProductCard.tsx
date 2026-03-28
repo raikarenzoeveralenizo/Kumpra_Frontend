@@ -9,6 +9,7 @@ import { stores } from "@/data/stores";
 import { discountedPrice, formatPrice } from "@/lib/utils";
 import { useCart } from "@/store/useCart";
 import { useAnimationStore } from "@/store/useAnimationStore";
+import { useRouter } from "next/navigation";
 
 export default function ProductCard({ product }: { product: Product }) {
   const addItem = useCart((state) => state.addItem);
@@ -21,10 +22,22 @@ export default function ProductCard({ product }: { product: Product }) {
   const finalPrice = discountedPrice(product.price, product.discountPercent);
   const hasDiscount = product.discountPercent > 0;
 
+  const router = useRouter();
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
+    const user = localStorage.getItem("loggedInUser");
+
+    // 🚫 Not logged in → go to login
+    if (!user) {
+      localStorage.setItem("redirect_after_login", `/product/${product.slug}`);
+      router.push("/login");
+      return;
+    }
+
+    // ✅ Logged in → proceed normally
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;

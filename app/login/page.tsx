@@ -60,7 +60,14 @@ export default function LoginPage() {
         localStorage.setItem("access_token", data.access);
         localStorage.setItem("refresh_token", data.refresh);
 
-        router.push("/home");
+        const redirectPath = localStorage.getItem("redirect_after_login");
+
+          if (redirectPath) {
+            localStorage.removeItem("redirect_after_login");
+            router.push(redirectPath);
+          } else {
+            router.push("/home");
+          }
       } else {
         setError(data.error || "Invalid email or password.");
       }

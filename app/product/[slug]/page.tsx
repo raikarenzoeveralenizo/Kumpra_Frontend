@@ -18,6 +18,7 @@ import { discountedPrice, formatPrice } from "@/lib/utils";
 import { useCart } from "@/store/useCart";
 import { useAnimationStore } from "@/store/useAnimationStore";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 export default function ProductDetailPage({
   params,
@@ -29,6 +30,8 @@ export default function ProductDetailPage({
 
   const [quantity, setQuantity] = useState(1);
   const addToCartButtonRef = useRef<HTMLButtonElement>(null);
+
+  const router = useRouter();
 
   const addItem = useCart((state) => state.addItem);
   const triggerFlyToCart = useAnimationStore(
@@ -47,20 +50,28 @@ export default function ProductDetailPage({
   const decrement = () => setQuantity((q) => (q > 1 ? q - 1 : 1));
 
   const handleAddToCartWithAnimation = () => {
-    if (addToCartButtonRef.current) {
-      const rect = addToCartButtonRef.current.getBoundingClientRect();
-      const startX = rect.left + rect.width / 2;
-      const startY = rect.top + rect.height / 2;
+  const user = localStorage.getItem("loggedInUser");
 
-      triggerFlyToCart(startX, startY);
-    }
+  if (!user) {
+    localStorage.setItem("redirect_after_login", `/product/${product.slug}`);
+    router.push("/login");
+    return;
+  }
 
-    for (let i = 0; i < quantity; i++) {
-      addItem(product);
-    }
-  };
+  if (addToCartButtonRef.current) {
+    const rect = addToCartButtonRef.current.getBoundingClientRect();
+    const startX = rect.left + rect.width / 2;
+    const startY = rect.top + rect.height / 2;
 
-  const buyNowUrl = `/checkout?directBuy=true&productId=${product.id}&qty=${quantity}`;
+    triggerFlyToCart(startX, startY);
+  }
+
+  for (let i = 0; i < quantity; i++) {
+    addItem(product);
+  }
+};
+
+   {/*const buyNowUrl = `/checkout?directBuy=true&productId=${product.id}&qty=${quantity}`;*/}
 
   return (
     <main className="min-h-screen bg-[#f7f7f5]">
@@ -172,12 +183,23 @@ export default function ProductDetailPage({
                 Add to Cart
               </motion.button>
 
-              <Link
-                href={buyNowUrl}
+              <button
+                type="button"
+                onClick={() => {
+                  const user = localStorage.getItem("loggedInUser");
+
+                  if (!user) {
+                    localStorage.setItem("redirect_after_login", `/product/${product.slug}`);
+                    router.push("/login");
+                    return;
+                  }
+
+                  router.push(`/checkout?directBuy=true&productId=${product.id}&qty=${quantity}`);
+                }}
                 className="flex flex-1 items-center justify-center rounded-md bg-[#faf3e8] py-3.5 text-sm font-medium text-[#8a5a2b] hover:bg-[#f5ebd8]"
               >
                 Buy Now
-              </Link>
+              </button>
             </div>
 
             <div className="mt-7 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">

@@ -29,8 +29,20 @@ export default function Navbar() {
   const mobileProfileRef = useRef<HTMLDivElement>(null);
   const desktopProfileRef = useRef<HTMLDivElement>(null);
 
-  const mobileCartIconRef = useRef<HTMLAnchorElement>(null);
-  const desktopCartIconRef = useRef<HTMLAnchorElement>(null);
+  const mobileCartIconRef = useRef<HTMLButtonElement>(null);
+  const desktopCartIconRef = useRef<HTMLButtonElement>(null);
+
+  const handleCartClick = () => {
+    const user = localStorage.getItem("loggedInUser");
+
+    if (!user) {
+      localStorage.setItem("redirect_after_login", "/cart");
+      router.push("/login");
+      return;
+    }
+
+    router.push("/cart");
+  };
 
   useEffect(() => {
     const user = localStorage.getItem("loggedInUser");
@@ -70,7 +82,7 @@ export default function Navbar() {
       const mobileEl = mobileCartIconRef.current;
       const desktopEl = desktopCartIconRef.current;
 
-      const isActuallyVisible = (el: HTMLAnchorElement | null) => {
+      const isActuallyVisible = (el: HTMLElement | null) => {
         if (!el) return false;
 
         const rect = el.getBoundingClientRect();
@@ -78,7 +90,7 @@ export default function Navbar() {
         return el.offsetParent !== null && rect.width > 0 && rect.height > 0;
       };
 
-      let activeEl: HTMLAnchorElement | null = null;
+      let activeEl: HTMLElement | null = null;
 
       if (isActuallyVisible(mobileEl)) {
         activeEl = mobileEl;
@@ -137,13 +149,14 @@ export default function Navbar() {
                 animate={isFlying ? { scale: [1, 1.2, 1] } : { scale: 1 }}
                 transition={{ duration: 0.4 }}
               >
-                <Link
-                  ref={mobileCartIconRef}
-                  href="/cart"
+                <button
+                  ref={mobileCartIconRef as any}
+                  type="button"
+                  onClick={handleCartClick}
                   className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-600 transition hover:bg-gray-100 hover:text-black"
                 >
                   <ShoppingCart className="h-5 w-5" />
-                </Link>
+                </button>
               </motion.div>
 
               <AnimatePresence>
@@ -241,13 +254,14 @@ export default function Navbar() {
                 animate={isFlying ? { scale: [1, 1.2, 1] } : { scale: 1 }}
                 transition={{ duration: 0.4 }}
               >
-                <Link
-                  ref={desktopCartIconRef}
-                  href="/cart"
+                <button
+                  ref={desktopCartIconRef as any}
+                  type="button"
+                  onClick={handleCartClick}
                   className="relative flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition hover:bg-gray-100 hover:text-black"
                 >
                   <ShoppingCart className="h-5 w-5" />
-                </Link>
+                </button>
               </motion.div>
 
               <AnimatePresence>
