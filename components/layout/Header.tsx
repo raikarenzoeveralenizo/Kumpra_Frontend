@@ -129,18 +129,22 @@ export default function Navbar() {
     loggedInUser?.fullName || loggedInUser?.email || "Profile";
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-[#1f5f56] bg-[#1f5f56] backdrop-blur">
       <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 md:flex-row md:items-center md:justify-between md:gap-4 md:py-4">
         
         {/* Top Row */}
         <div className="flex items-center justify-between gap-3">
-          <Link href="/home" className="flex shrink-0 items-center">
+          <Link href="/home" className="flex shrink-0 items-center gap-2">
             <img
-              src="/img/kompra_logo.png"
+              src="/img/k_logo.png"
               alt="Kompra.ph"
-              className="h-6 w-auto sm:h-8"
+              className="h-10 w-auto sm:h-12"
             />
+            <span className="text-lg font-bold text-white sm:text-xl">
+              Kompra.ph
+            </span>
           </Link>
+
 
           {/* Mobile Actions */}
           <div className="flex items-center gap-2 md:hidden">
@@ -153,7 +157,7 @@ export default function Navbar() {
                   ref={mobileCartIconRef as any}
                   type="button"
                   onClick={handleCartClick}
-                  className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-600 transition hover:bg-gray-100 hover:text-black"
+                  className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[#b7e4d8] hover:bg-white/10 hover:text-white"
                 >
                   <ShoppingCart className="h-5 w-5" />
                 </button>
@@ -229,21 +233,21 @@ export default function Navbar() {
           <nav className="hidden items-center gap-6 text-sm md:flex">
             <Link
               href="/products"
-              className="font-medium text-gray-600 transition hover:text-black"
+              className="font-medium text-[#b7e4d8] hover:text-white"
             >
               Products
             </Link>
 
             <Link
               href="/stores"
-              className="font-medium text-gray-600 transition hover:text-black"
-            >
+              className="font-medium text-[#b7e4d8] hover:text-white"
+              >
               Stores
             </Link>
 
             <Link
               href="/ai"
-              className="inline-flex items-center gap-1.5 font-medium text-[#2f8f83] transition hover:text-[#26776d]"
+              className="inline-flex items-center gap-1.5 font-medium text-[#b7e4d8] hover:text-white"
             >
               <Sparkles className="h-4 w-4" />
               AI
@@ -258,7 +262,7 @@ export default function Navbar() {
                   ref={desktopCartIconRef as any}
                   type="button"
                   onClick={handleCartClick}
-                  className="relative flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition hover:bg-gray-100 hover:text-black"
+                  className="relative flex h-10 w-10 items-center justify-center rounded-lg text-[#b7e4d8] hover:bg-white/10 hover:text-white"
                 >
                   <ShoppingCart className="h-5 w-5" />
                 </button>
@@ -282,7 +286,7 @@ export default function Navbar() {
               <div className="relative" ref={desktopProfileRef}>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#b7e4d8]/30 bg-[#b7e4d8]/10 px-4 py-2 text-sm font-medium text-[#b7e4d8]"
                 >
                   <User size={18} />
                   <span className="max-w-35 truncate">{displayName}</span>
@@ -311,7 +315,7 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-[#de922f] hover:text-white"
+                className="inline-flex items-center gap-2 rounded-xl border border-[#b7e4d8]/30 bg-[#b7e4d8]/10 px-4 py-2 text-sm font-medium text-[#b7e4d8]"
               >
                 <User size={18} />
                 Login
@@ -323,21 +327,21 @@ export default function Navbar() {
           <div className="flex items-center justify-center gap-5 border-t border-slate-200 pt-2 text-sm md:hidden">
             <Link
               href="/products"
-              className="font-medium text-gray-600 transition hover:text-black"
+              className="font-medium text-[#b7e4d8] hover:text-white"
             >
               Products
             </Link>
 
             <Link
               href="/stores"
-              className="font-medium text-gray-600 transition hover:text-black"
+              className="font-medium text-[#b7e4d8] hover:text-white"
             >
               Stores
             </Link>
 
             <Link
               href="/ai"
-              className="inline-flex items-center gap-1 text-[#2f8f83] transition hover:text-[#26776d]"
+              className="font-medium text-[#b7e4d8] hover:text-white"
             >
               <Sparkles className="h-4 w-4" />
               AI

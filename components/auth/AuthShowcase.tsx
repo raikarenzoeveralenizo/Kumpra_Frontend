@@ -107,7 +107,7 @@ export default function AuthShowcase({
           href="/"
           className="mt-10 inline-block text-sm text-white/90 hover:underline"
         >
-          Back to Home
+           ← Back to Home
         </Link>
       </div>
     </div>

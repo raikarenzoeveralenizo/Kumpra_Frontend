@@ -240,6 +240,7 @@ export default function CheckoutPage() {
               <CheckoutSummary
                 items={items}
                 deliveryFee={mode === "delivery" ? deliveryFee : 0}
+                mode={mode}
               />
 
               <button

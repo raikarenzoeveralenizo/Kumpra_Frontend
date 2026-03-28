@@ -7,7 +7,7 @@ export default function SearchBar() {
       {/* Icon */}
       <Search
         size={18}
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 sm:left-4"
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b7e4d8]/70 sm:left-4"
       />
 
       {/* Input */}
@@ -17,21 +17,23 @@ export default function SearchBar() {
         className="
           w-full
           rounded-lg sm:rounded-xl
-          border border-gray-200
-          bg-[#f8fafc]
-          
+
+          border border-[#b7e4d8]/20
+          bg-[#b7e4d8]/10 backdrop-blur
+
           py-2.5 sm:py-3
           pl-10 sm:pl-11
           pr-3 sm:pr-4
-          
+
           text-[13px] sm:text-sm
-          text-gray-700
-          
+          text-white placeholder-[#b7e4d8]/60
+
           outline-none
           transition-all duration-200
-          
-          focus:border-[#2f8f83]
-          focus:ring-2 focus:ring-[#2f8f83]/20
+
+          focus:border-[#b7e4d8]
+          focus:ring-2 focus:ring-[#b7e4d8]/30
+          focus:bg-[#b7e4d8]/15
         "
       />
     </div>

@@ -85,7 +85,7 @@ export default function LoginPage() {
       <div className="flex min-h-screen w-full items-center justify-center px-4 py-6 sm:px-6 lg:w-1/2 lg:px-10">
         <div className="w-full max-w-sm">
           <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
-            <h2 className="text-2xl font-bold text-[#1e3a8a]">Welcome Back</h2>
+            <h2 className="text-2xl font-bold text-brand-blue">Welcome Back</h2>
             <p className="mt-1 text-sm leading-5 text-slate-500">
               Log in to continue your shopping experience.
             </p>

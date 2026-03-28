@@ -11,13 +11,17 @@ type CheckoutItem = {
   quantity: number;
 };
 
+type CheckoutSummaryProps = {
+  items: CheckoutItem[];
+  deliveryFee?: number;
+  mode?: "delivery" | "pickup" | null;
+};
+
 export default function CheckoutSummary({
   items,
   deliveryFee = 0,
-}: {
-  items: CheckoutItem[];
-  deliveryFee?: number;
-}) {
+  mode,
+}: CheckoutSummaryProps) {
   const subtotal = items.reduce((sum, item) => {
     return (
       sum + discountedPrice(item.price, item.discountPercent || 0) * item.quantity
@@ -79,14 +83,16 @@ export default function CheckoutSummary({
           <span>{formatPrice(subtotal)}</span>
         </div>
 
-        <div className="flex items-center justify-between text-sm text-slate-500">
-          <span>Delivery Fee</span>
-          <span>{formatPrice(deliveryFee)}</span>
-        </div>
+        {mode === "delivery" && (
+          <div className="flex items-center justify-between text-sm text-slate-500">
+            <span>Delivery Fee</span>
+            <span>{formatPrice(deliveryFee)}</span>
+          </div>
+        )}
 
         <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-lg font-bold text-brand-blue">
           <span>Total</span>
-          <span>{formatPrice(subtotal)}</span>
+          <span>{formatPrice(total)}</span>
         </div>
       </div>
     </div>

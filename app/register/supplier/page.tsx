@@ -370,12 +370,6 @@ export default function SupplierRegisterPage() {
                 </Link>
               </p>
 
-              <Link
-                href="/"
-                className="mt-1.5 inline-block text-[12px] text-slate-500 hover:text-slate-700"
-              >
-                ← Back to Home
-              </Link>
             </div>
           </div>
         </div>
