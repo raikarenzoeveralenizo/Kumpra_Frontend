@@ -1,28 +1,128 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, ChangeEvent, FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import AuthShowcase from "@/components/auth/AuthShowcase";
 import {
-  Building2,
-  Mail,
-  Phone,
-  Lock,
-  Eye,
-  ChevronDown,
-  MapPin,
-  Upload,
+  Building2, Mail, Phone, Lock, Eye, EyeOff, ChevronDown, MapPin, Upload, Loader2, CheckCircle2
 } from "lucide-react";
 
-export default function SupplierRegisterPage() {
-  const [step, setStep] = useState(1);
+// --- TYPES ---
+interface UploadCardProps {
+  title: string;
+  subtext: string;
+  file: File | null;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+}
 
-  const nextStep = () => {
-    if (step < 3) setStep(step + 1);
+export default function SupplierRegisterPage() {
+  const router = useRouter();
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  // --- FORM STATE ---
+  const [formData, setFormData] = useState({
+    // Account Info
+    company_name: "",
+    contact_person: "",
+    email: "",
+    contact_number: "",
+    password: "",
+    confirmPassword: "",
+    // Company Details
+    business_type: "Manufacturer",
+    category: "Food",
+    address: "",
+    city: "",
+    province: "",
+    zip_code: "",
+    min_order_value: "",
+    delivery_areas: "",
+    description: "",
+    // Documents
+    sec_dti_reg: null as File | null,
+    bir_2303: null as File | null,
+    catalog: null as File | null,
+    agreed_to_terms: false,
+  });
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    if (type === "checkbox") {
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData((prev) => ({ ...prev, [name]: checked }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
-  const prevStep = () => {
-    if (step > 1) setStep(step - 1);
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, fieldName: string) => {
+    const file = e.target.files ? e.target.files[0] : null;
+    setFormData((prev) => ({ ...prev, [fieldName]: file }));
+  };
+
+  const nextStep = () => setStep((s) => Math.min(s + 1, 3));
+  const prevStep = () => setStep((s) => Math.max(s - 1, 1));
+
+  // --- SUBMIT LOGIC ---
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+    if (!formData.agreed_to_terms) {
+      alert("You must agree to the Supplier Agreement.");
+      return;
+    }
+
+    setLoading(true);
+    const data = new FormData();
+
+    // Mapping fields to match typical Django backend expectations
+    data.append("full_name", formData.contact_person);
+    data.append("email", formData.email);
+    data.append("contact_number", formData.contact_number);
+    data.append("password", formData.password);
+    data.append("role", "SUPPLIER");
+
+    const supplierDetails = {
+      company_name: formData.company_name,
+      business_type: formData.business_type,
+      category: formData.category,
+      address: formData.address,
+      city: formData.city,
+      province: formData.province,
+      zip_code: formData.zip_code,
+      min_order_value: formData.min_order_value,
+      delivery_areas: formData.delivery_areas,
+      description: formData.description,
+    };
+    data.append("supplier_details", JSON.stringify(supplierDetails));
+
+    if (formData.sec_dti_reg) data.append("sec_dti_reg", formData.sec_dti_reg);
+    if (formData.bir_2303) data.append("bir_2303", formData.bir_2303);
+    if (formData.catalog) data.append("catalog", formData.catalog);
+
+    try {
+      const response = await fetch("http://localhost:8000/api/register/", {
+        method: "POST",
+        body: data,
+      });
+
+      if (response.ok) {
+        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+      } else {
+        const err = await response.json();
+        alert("Registration Error: " + JSON.stringify(err));
+      }
+    } catch (error) {
+      alert("Connection to server failed.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -30,380 +130,139 @@ export default function SupplierRegisterPage() {
       <AuthShowcase variant="supplier" />
 
       <div className="flex min-h-screen w-full items-center justify-center px-3 py-4 sm:px-4 lg:w-1/2 lg:px-6">
-        <div className="w-full max-w-115">
-          <div className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-4">
-            <h1 className="text-lg font-serif font-bold text-[#0f172a] sm:text-xl">
-              Supplier Registration
-            </h1>
+        <form onSubmit={step === 3 ? handleSubmit : (e) => e.preventDefault()} className="w-full max-w-115">
+          <div className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-6">
+            <h1 className="text-lg font-serif font-bold text-[#0f172a] sm:text-xl">Supplier Registration</h1>
+            <p className="mt-1.5 text-sm text-slate-500">Step {step} of 3</p>
 
-            <p className="mt-1.5 text-sm text-slate-500">
-              {step === 1 && "Step 1 of 3 — Account Info"}
-              {step === 2 && "Step 2 of 3 — Company Details"}
-              {step === 3 && "Step 3 of 3 — Documents & Terms"}
-            </p>
-
+            {/* PROGRESS BAR */}
             <div className="mt-4 grid grid-cols-3 gap-2">
-              <div
-                className={`h-1 rounded-full ${
-                  step >= 1 ? "bg-[#2f8f83]" : "bg-slate-200"
-                }`}
-              />
-              <div
-                className={`h-1 rounded-full ${
-                  step >= 2 ? "bg-[#2f8f83]" : "bg-slate-200"
-                }`}
-              />
-              <div
-                className={`h-1 rounded-full ${
-                  step >= 3 ? "bg-[#2f8f83]" : "bg-slate-200"
-                }`}
-              />
+              {[1, 2, 3].map((i) => (
+                <div key={i} className={`h-1 rounded-full ${step >= i ? "bg-[#2f8f83]" : "bg-slate-200"}`} />
+              ))}
             </div>
 
+            {/* STEP 1: ACCOUNT INFO */}
             {step === 1 && (
               <div className="mt-5 space-y-3.5">
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Company / Business Name *
-                  </label>
-                  <div className="relative">
-                    <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder="Your business name"
-                      className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                    />
-                  </div>
+                <Input label="Company Name *" name="company_name" value={formData.company_name} onChange={handleChange} placeholder="e.g. AgriTrade Corp" />
+                <Input label="Contact Person *" name="contact_person" value={formData.contact_person} onChange={handleChange} placeholder="Full Name" />
+                <Input label="Email Address *" name="email" type="email" value={formData.email} onChange={handleChange} icon={<Mail size={16}/>} />
+                <Input label="Phone Number" name="contact_number" value={formData.contact_number} onChange={handleChange} icon={<Phone size={16}/>} />
+                <div className="relative">
+                  <Input label="Password *" name="password" type={showPassword ? "text" : "password"} value={formData.password} onChange={handleChange} icon={<Lock size={16}/>} />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-9 text-slate-400">
+                    {showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
+                  </button>
                 </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Contact Person *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Full name"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Email Address *
-                  </label>
-                  <div className="relative">
-                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="email"
-                      placeholder="company@email.com"
-                      className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Phone Number
-                  </label>
-                  <div className="relative">
-                    <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder="+63 9XX XXX XXXX"
-                      className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Password *
-                  </label>
-                  <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="password"
-                      placeholder="••••••••"
-                      className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-10 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                    />
-                    <Eye className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Confirm Password *
-                  </label>
-                  <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="password"
-                      placeholder="••••••••"
-                      className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={nextStep}
-                  className="w-full rounded-lg bg-[#2f8f83] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#26776d]"
-                >
-                  Continue →
-                </button>
+                <Input label="Confirm Password *" name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} icon={<Lock size={16}/>} />
+                <button type="button" onClick={nextStep} className="w-full rounded-lg bg-[#2f8f83] py-2.5 font-semibold text-white transition hover:bg-[#26776d]">Continue →</button>
               </div>
             )}
 
+            {/* STEP 2: COMPANY DETAILS */}
             {step === 2 && (
               <div className="mt-5 space-y-3.5">
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Business Type *
-                  </label>
-                  <div className="relative">
-                    <select className="w-full appearance-none rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20">
-                      <option>Select business type</option>
-                      <option>Manufacturer</option>
-                      <option>Distributor</option>
-                      <option>Wholesaler</option>
-                      <option>Importer</option>
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  </div>
+                <div className="grid grid-cols-2 gap-3">
+                   <Select label="Business Type *" name="business_type" value={formData.business_type} onChange={handleChange} options={["Manufacturer", "Distributor", "Wholesaler", "Importer"]} />
+                   <Select label="Product Category *" name="category" value={formData.category} onChange={handleChange} options={["Food", "Beverages", "Groceries", "Household"]} />
                 </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Product Categories *
-                  </label>
-                  <div className="relative">
-                    <select className="w-full appearance-none rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20">
-                      <option>Primary product category</option>
-                      <option>Food</option>
-                      <option>Beverages</option>
-                      <option>Groceries</option>
-                      <option>Household Products</option>
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  </div>
+                <Input label="Company Address *" name="address" value={formData.address} onChange={handleChange} icon={<MapPin size={16}/>} />
+                <div className="grid grid-cols-2 gap-3">
+                  <Input label="City *" name="city" value={formData.city} onChange={handleChange} />
+                  <Input label="Province" name="province" value={formData.province} onChange={handleChange} />
                 </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Company Address *
-                  </label>
-                  <div className="relative">
-                    <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder="Street address"
-                      className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                    />
-                  </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input label="Min. Order (₱)" name="min_order_value" value={formData.min_order_value} onChange={handleChange} />
+                  <Input label="ZIP Code" name="zip_code" value={formData.zip_code} onChange={handleChange} />
                 </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                      City *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="City"
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                      Province
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Province"
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                      ZIP Code
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g., 1000"
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                      Min. Order Value (₱)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g., 5000"
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Delivery Areas
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Metro Manila, Bulacan, Cavite"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Company Description
-                  </label>
-                  <textarea
-                    rows={3}
-                    placeholder="Tell us about your company and products..."
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                  />
-                </div>
-
-                <div className="grid gap-2.5 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={prevStep}
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50"
-                  >
-                    ← Back
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={nextStep}
-                    className="rounded-lg bg-[#2f8f83] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#26776d]"
-                  >
-                    Continue →
-                  </button>
+                <Input label="Delivery Areas" name="delivery_areas" value={formData.delivery_areas} onChange={handleChange} placeholder="Metro Manila, etc." />
+                <textarea name="description" value={formData.description} onChange={handleChange} rows={3} placeholder="Tell us about your company..." className="w-full rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#2f8f83]" />
+                <div className="flex gap-3">
+                  <button type="button" onClick={prevStep} className="flex-1 rounded-lg border py-2.5 text-sm">Back</button>
+                  <button type="button" onClick={nextStep} className="flex-1 rounded-lg bg-[#2f8f83] py-2.5 text-sm font-semibold text-white">Continue →</button>
                 </div>
               </div>
             )}
 
+            {/* STEP 3: DOCUMENTS */}
             {step === 3 && (
-              <div className="mt-5 space-y-3.5">
-                <div className="rounded-xl border border-slate-200 bg-[#fcfcfb] p-4">
-                  <p className="text-sm text-slate-500">
-                    Upload your business documents for verification.
-                  </p>
+              <div className="mt-5 space-y-4">
+                <UploadCard title="SEC / DTI Certificate" subtext="JPG, PNG, PDF up to 5MB" file={formData.sec_dti_reg} onChange={(e) => handleFileChange(e, "sec_dti_reg")} />
+                <UploadCard title="BIR Form 2303" subtext="JPG, PNG, PDF up to 5MB" file={formData.bir_2303} onChange={(e) => handleFileChange(e, "bir_2303")} />
+                <UploadCard title="Catalog (Optional)" subtext="PDF, XLSX up to 10MB" file={formData.catalog} onChange={(e) => handleFileChange(e, "catalog")} />
+                
+                <label className="flex items-start gap-2.5 rounded-xl border p-3 bg-slate-50">
+                  <input type="checkbox" name="agreed_to_terms" checked={formData.agreed_to_terms} onChange={handleChange} className="mt-1 h-4 w-4" />
+                  <span className="text-xs text-slate-500 leading-tight">I agree to the Supplier Agreement and confirm information is accurate.</span>
+                </label>
 
-                  <div className="mt-4 space-y-4">
-                    <UploadCard
-                      title="SEC / DTI Registration Certificate"
-                      subtext="JPG, PNG, PDF up to 5MB"
-                    />
-                    <UploadCard
-                      title="BIR Certificate of Registration (Form 2303)"
-                      subtext="JPG, PNG, PDF up to 5MB"
-                    />
-                    <UploadCard
-                      title="Product Catalog / Price List (Optional)"
-                      subtext="JPG, PNG, PDF, XLSX up to 10MB"
-                    />
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-slate-200 bg-[#fcfcfb] p-4">
-                  <label className="flex items-start gap-2.5">
-                    <input
-                      type="checkbox"
-                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#2f8f83] focus:ring-[#2f8f83]"
-                    />
-                    <span className="text-xs leading-5 text-slate-500">
-                      I agree to Kompra.ph&apos;s Supplier Agreement, including
-                      product quality standards, delivery SLAs, payment terms,
-                      and return/refund policies. I confirm that all information
-                      provided is accurate.
-                    </span>
-                  </label>
-                </div>
-
-                <div className="grid gap-2.5 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={prevStep}
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50"
-                  >
-                    ← Back
-                  </button>
-
-                  <button
-                    type="button"
-                    className="rounded-lg bg-[#2f8f83] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#26776d]"
-                  >
-                    Submit Application
+                <div className="flex gap-3">
+                  <button type="button" onClick={prevStep} className="flex-1 rounded-lg border py-2.5">Back</button>
+                  <button type="submit" disabled={loading} className="flex-1 flex justify-center items-center rounded-lg bg-[#2f8f83] text-white font-semibold">
+                    {loading ? <Loader2 className="animate-spin" size={20} /> : "Submit"}
                   </button>
                 </div>
               </div>
             )}
 
-            <div className="mt-6 text-center text-[13px] text-slate-500">
-              <p>
-                Already a supplier?{" "}
-                <Link
-                  href="/login"
-                  className="text-[13px] font-semibold text-[#2f8f83] hover:underline"
-                >
-                  Log In
-                </Link>
-              </p>
-
-              <p className="mt-1.5">
-                Want to sell directly?{" "}
-                <Link
-                  href="/register/store-seller"
-                  className="text-[13px] font-semibold text-[#2f8f83] hover:underline"
-                >
-                  Register as Store Seller
-                </Link>
-              </p>
-
-              <Link
-                href="/"
-                className="mt-1.5 inline-block text-[12px] text-slate-500 hover:text-slate-700"
-              >
-                ← Back to Home
-              </Link>
+            {/* LINKS */}
+            <div className="mt-6 text-center text-xs text-slate-500 space-y-2">
+              <p>Already a supplier? <Link href="/login" className="font-bold text-[#2f8f83]">Log In</Link></p>
+              <p>Want to sell directly? <Link href="/register/store-seller" className="font-bold text-[#2f8f83]">Register as Store Seller</Link></p>
             </div>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
 }
 
-function UploadCard({
-  title,
-  subtext,
-}: {
-  title: string;
-  subtext: string;
-}) {
+// --- REUSABLE COMPONENTS ---
+
+function Input({ label, icon, ...props }: any) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium text-slate-900">
-        {title}
-      </label>
-
-      <div className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center">
-        <Upload className="mx-auto h-8 w-8 text-slate-400" />
-        <p className="mt-2 text-sm text-slate-500">
-          Click to upload or drag & drop
-        </p>
-        <p className="mt-1 text-xs text-slate-400">{subtext}</p>
+      <label className="mb-1 block text-sm font-medium text-slate-800">{label}</label>
+      <div className="relative">
+        {icon && <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">{icon}</div>}
+        <input {...props} className={`w-full rounded-lg border border-slate-300 py-2.5 ${icon ? 'pl-10' : 'px-3'} text-sm focus:border-[#2f8f83] outline-none`} />
       </div>
+    </div>
+  );
+}
+
+function Select({ label, options, ...props }: any) {
+  return (
+    <div>
+      <label className="mb-1 block text-sm font-medium text-slate-800">{label}</label>
+      <div className="relative">
+        <select {...props} className="w-full appearance-none rounded-lg border border-slate-300 bg-white p-2.5 text-sm outline-none focus:border-[#2f8f83]">
+          {options.map((opt: string) => <option key={opt} value={opt}>{opt}</option>)}
+        </select>
+        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+      </div>
+    </div>
+  );
+}
+
+function UploadCard({ title, subtext, file, onChange }: UploadCardProps) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-semibold text-slate-700">{title}</label>
+      <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-[#fcfcfb] py-4 hover:bg-slate-50">
+        <input type="file" hidden onChange={onChange} />
+        {file ? (
+          <div className="flex items-center gap-2 text-[#2f8f83] text-sm font-medium">
+            <CheckCircle2 size={18} /> {file.name.substring(0, 20)}...
+          </div>
+        ) : (
+          <>
+            <Upload className="h-6 w-6 text-slate-400" />
+            <p className="mt-1 text-xs text-slate-500">Upload {subtext}</p>
+          </>
+        )}
+      </label>
     </div>
   );
 }
