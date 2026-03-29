@@ -136,13 +136,11 @@ export default function Navbar() {
         <div className="flex items-center justify-between gap-3">
           <Link href="/home" className="flex shrink-0 items-center gap-2">
             <img
-              src="/img/k_logo.png"
+              src="/img/final_logo.png"
               alt="Kompra.ph"
               className="h-10 w-auto sm:h-12"
             />
-            <span className="text-lg font-bold text-white sm:text-xl">
-              Kompra.ph
-            </span>
+            
           </Link>
 
 
