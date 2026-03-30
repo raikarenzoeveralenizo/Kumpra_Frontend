@@ -249,7 +249,7 @@ export default function CheckoutPage() {
                 disabled={!canPlaceOrder}
                 className={`flex w-full items-center justify-center rounded-xl py-3 text-base font-bold text-white transition-all ${
                   canPlaceOrder
-                    ? "bg-[#3a9688] shadow-lg shadow-[#3a9688]/20 hover:bg-[#148a78]"
+                    ? "bg-[#1f5f56] shadow-lg shadow-[#3a9688]/20 hover:bg-[#148a78]"
                     : "pointer-events-none cursor-not-allowed bg-slate-300"
                 }`}
               >

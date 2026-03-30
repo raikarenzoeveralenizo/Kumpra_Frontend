@@ -11,7 +11,18 @@ export default function FeaturedStores() {
         <h2 className="font-serif text-3xl font-bold text-slate-900">Best Selling Stores</h2>
         <Link 
           href="/stores" 
-          className="flex items-center gap-1 text-sm font-semibold text-slate-600 transition-colors hover:text-black"
+          className="
+            flex items-center gap-2
+            px-3 py-1.5
+            rounded-md
+            text-sm font-semibold
+
+            text-slate-600
+            transition-all duration-200
+
+            hover:bg-[#d98b2b]
+            hover:text-white
+          "
         >
           View All <ArrowRight className="h-4 w-4" />
         </Link>
