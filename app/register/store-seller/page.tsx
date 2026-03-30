@@ -1,27 +1,109 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, ChangeEvent, FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import AuthShowcase from "@/components/auth/AuthShowcase";
 import {
-  Mail,
-  Phone,
-  Lock,
-  Eye,
-  ChevronDown,
-  MapPin,
-  Upload,
+  Mail, Phone, Lock, Eye, EyeOff, ChevronDown, MapPin, Upload, Loader2, CheckCircle2
 } from "lucide-react";
 
-export default function StoreSellerRegisterPage() {
-  const [step, setStep] = useState(1);
+// --- TYPES FOR PROPS ---
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+  icon?: React.ReactNode; // Optional icon
+}
 
-  const nextStep = () => {
-    if (step < 3) setStep(step + 1);
+interface FileUploadProps {
+  label: string;
+  file: File | null;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+}
+
+export default function StoreSellerRegisterPage() {
+  const router = useRouter();
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [formData, setFormData] = useState({
+    full_name: "",
+    email: "",
+    contact_number: "",
+    password: "",
+    confirmPassword: "",
+    store_name: "",
+    category: "Bakery & Pastries",
+    address: "",
+    city: "",
+    province: "",
+    zip_code: "",
+    description: "",
+    business_permit: null as File | null,
+    dti_sec_registration: null as File | null,
+  });
+
+  // Fixed 'e' type error
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const prevStep = () => {
-    if (step > 1) setStep(step - 1);
+  // Fixed 'e' and 'fieldName' type error
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, fieldName: string) => {
+    const file = e.target.files ? e.target.files[0] : null;
+    setFormData((prev) => ({ ...prev, [fieldName]: file }));
+  };
+
+  const nextStep = () => setStep((s) => s + 1);
+  const prevStep = () => setStep((s) => s - 1);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+
+    setLoading(true);
+    const data = new FormData();
+    data.append("full_name", formData.full_name);
+    data.append("email", formData.email);
+    data.append("contact_number", formData.contact_number);
+    data.append("password", formData.password);
+    data.append("role", "SELLER");
+
+    const storeDetails = {
+      store_name: formData.store_name,
+      category: formData.category,
+      address: formData.address,
+      city: formData.city,
+      province: formData.province,
+      zip_code: formData.zip_code,
+      description: formData.description,
+    };
+    data.append("store_details", JSON.stringify(storeDetails));
+
+    if (formData.business_permit) data.append("business_permit", formData.business_permit);
+    if (formData.dti_sec_registration) data.append("dti_sec_registration", formData.dti_sec_registration);
+
+    try {
+      const response = await fetch("http://localhost:8000/api/register/", {
+        method: "POST",
+        body: data,
+      });
+
+      if (response.ok) {
+        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+      } else {
+        const errorData = await response.json();
+        alert("Registration Failed: " + JSON.stringify(errorData));
+      }
+    } catch (err) {
+      alert("Server error. Check if Django is running.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,319 +111,99 @@ export default function StoreSellerRegisterPage() {
       <AuthShowcase variant="seller" />
 
       <div className="flex min-h-screen w-full items-center justify-center px-3 py-4 sm:px-4 lg:w-1/2 lg:px-6">
-        <div className="w-full max-w-115">
-          <div className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-4">
-            <h1 className="text-lg font-serif font-bold text-[#0f172a] sm:text-xl">
-              Store Seller Registration
-            </h1>
+        <form onSubmit={step === 3 ? handleSubmit : (e) => e.preventDefault()} className="w-full max-w-115">
+          <div className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-6">
+            <h1 className="text-lg font-serif font-bold text-[#0f172a] sm:text-xl">Store Seller Registration</h1>
+            <p className="mt-1.5 text-sm text-slate-500">Step {step} of 3</p>
 
-            <p className="mt-1.5 text-sm text-slate-500">
-              {step === 1 && "Step 1 of 3 — Account Info"}
-              {step === 2 && "Step 2 of 3 — Store Details"}
-              {step === 3 && "Step 3 of 3 — Business Documents"}
-            </p>
-
+            {/* PROGRESS BAR */}
             <div className="mt-4 grid grid-cols-3 gap-2">
-              <div
-                className={`h-1 rounded-full ${
-                  step >= 1 ? "bg-[#2f8f83]" : "bg-slate-200"
-                }`}
-              />
-              <div
-                className={`h-1 rounded-full ${
-                  step >= 2 ? "bg-[#2f8f83]" : "bg-slate-200"
-                }`}
-              />
-              <div
-                className={`h-1 rounded-full ${
-                  step >= 3 ? "bg-[#2f8f83]" : "bg-slate-200"
-                }`}
-              />
+              {[1, 2, 3].map((i) => (
+                <div key={i} className={`h-1 rounded-full ${step >= i ? "bg-[#2f8f83]" : "bg-slate-200"}`} />
+              ))}
             </div>
 
             {step === 1 && (
               <div className="mt-5 space-y-3.5">
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Store Name *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Juan's Fresh Market"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                  />
+                <Input label="Store Name *" name="store_name" value={formData.store_name} onChange={handleChange} />
+                <Input label="Owner Full Name *" name="full_name" value={formData.full_name} onChange={handleChange} />
+                <Input icon={<Mail size={16}/>} label="Email Address *" type="email" name="email" value={formData.email} onChange={handleChange} />
+                <div className="relative">
+                  <Input icon={<Lock size={16}/>} label="Password *" type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-9 text-slate-400">
+                    {showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
+                  </button>
                 </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Owner Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Juan Dela Cruz"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Email Address *
-                  </label>
-                  <div className="relative">
-                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="email"
-                      placeholder="store@example.com"
-                      className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Phone Number
-                  </label>
-                  <div className="relative">
-                    <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder="+63 9XX XXX XXXX"
-                      className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Password *
-                  </label>
-                  <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="password"
-                      placeholder="••••••••"
-                      className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-10 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                    />
-                    <Eye className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Confirm Password *
-                  </label>
-                  <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="password"
-                      placeholder="••••••••"
-                      className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={nextStep}
-                  className="w-full rounded-lg bg-[#2f8f83] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#26776d]"
-                >
-                  Continue →
-                </button>
+                <Input icon={<Lock size={16}/>} label="Confirm Password *" type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} />
+                <button type="button" onClick={nextStep} className="w-full rounded-lg bg-[#2f8f83] py-2.5 font-semibold text-white">Continue →</button>
               </div>
             )}
 
             {step === 2 && (
               <div className="mt-5 space-y-3.5">
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Store Category *
-                  </label>
-                  <div className="relative">
-                    <select className="w-full appearance-none rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20">
-                      <option>Bakery & Pastries</option>
-                      <option>Groceries</option>
-                      <option>Fruits & Vegetables</option>
-                      <option>Meat & Seafood</option>
-                      <option>Beverages</option>
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  </div>
+                  <label className="mb-1.5 block text-sm font-medium">Store Category *</label>
+                  <select name="category" value={formData.category} onChange={handleChange} className="w-full rounded-lg border border-slate-300 p-2.5 text-sm">
+                    <option>Bakery & Pastries</option>
+                    <option>Groceries</option>
+                  </select>
                 </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Store Address *
-                  </label>
-                  <div className="relative">
-                    <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder="Street address"
-                      className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                      City *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="City"
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                      Province
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Province"
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                    />
-                  </div>
-                </div>
-
-                <div className="max-w-45">
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    ZIP Code
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g., 1000"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-800">
-                    Store Description
-                  </label>
-                  <textarea
-                    rows={3}
-                    placeholder="Tell customers what your store is about..."
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#2f8f83] focus:ring-2 focus:ring-[#2f8f83]/20"
-                  />
-                </div>
-
-                <div className="grid gap-2.5 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={prevStep}
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50"
-                  >
-                    ← Back
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={nextStep}
-                    className="rounded-lg bg-[#2f8f83] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#26776d]"
-                  >
-                    Continue →
-                  </button>
+                <Input icon={<MapPin size={16}/>} label="Store Address *" name="address" value={formData.address} onChange={handleChange} />
+                <div className="flex gap-3">
+                  <button type="button" onClick={prevStep} className="flex-1 rounded-lg border py-2.5">Back</button>
+                  <button type="button" onClick={nextStep} className="flex-1 rounded-lg bg-[#2f8f83] py-2.5 text-white">Continue →</button>
                 </div>
               </div>
             )}
 
             {step === 3 && (
-              <div className="mt-5 space-y-3.5">
-                <div className="rounded-xl border border-slate-200 bg-[#fcfcfb] p-4">
-                  <p className="text-sm leading-6 text-slate-500">
-                    Upload your business documents for verification. Accepted
-                    formats: JPG, PNG, PDF (max 5MB each).
-                  </p>
-
-                  <div className="mt-4">
-                    <label className="mb-2 block text-sm font-medium text-slate-900">
-                      Business Permit
-                    </label>
-                    <div className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center">
-                      <Upload className="mx-auto h-7 w-7 text-slate-400" />
-                      <p className="mt-2 text-sm text-slate-500">
-                        Click to upload or drag & drop
-                      </p>
-                      <p className="mt-1 text-xs text-slate-400">
-                        JPG, PNG, PDF up to 5MB
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4">
-                    <label className="mb-2 block text-sm font-medium text-slate-900">
-                      DTI / SEC Registration
-                    </label>
-                    <div className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center">
-                      <Upload className="mx-auto h-7 w-7 text-slate-400" />
-                      <p className="mt-2 text-sm text-slate-500">
-                        Click to upload or drag & drop
-                      </p>
-                      <p className="mt-1 text-xs text-slate-400">
-                        JPG, PNG, PDF up to 5MB
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-slate-200 bg-[#fcfcfb] p-4">
-                  <h3 className="text-base font-serif font-semibold text-slate-900">
-                    Terms & Conditions
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
-                    By registering, you agree to Kompra.ph&apos;s Seller
-                    Agreement, including commission rates, return policies, and
-                    quality standards. Your application will be reviewed within
-                    2–3 business days.
-                  </p>
-                </div>
-
-                <div className="grid gap-2.5 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={prevStep}
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50"
-                  >
-                    ← Back
-                  </button>
-
-                  <button
-                    type="button"
-                    className="rounded-lg bg-[#2f8f83] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#26776d]"
-                  >
-                    Submit Application
+              <div className="mt-5 space-y-4">
+                <FileUpload label="Business Permit" file={formData.business_permit} onChange={(e) => handleFileChange(e, "business_permit")} />
+                <FileUpload label="DTI / SEC Registration" file={formData.dti_sec_registration} onChange={(e) => handleFileChange(e, "dti_sec_registration")} />
+                <div className="flex gap-3">
+                  <button type="button" onClick={prevStep} className="flex-1 rounded-lg border py-2.5">Back</button>
+                  <button type="submit" disabled={loading} className="flex-1 bg-[#2f8f83] py-2.5 text-white rounded-lg">
+                    {loading ? <Loader2 className="animate-spin mx-auto" size={18} /> : "Submit"}
                   </button>
                 </div>
               </div>
             )}
-
-            <div className="mt-6 text-center text-[13px] text-slate-500">
-                <p>
-                    Already a seller?{" "}
-                    <Link
-                    href="/login"
-                    className="text-[13px] font-semibold text-[#2f8f83] hover:underline"
-                    >
-                    Log In
-                    </Link>
-                </p>
-
-                <p className="mt-1.5">
-                    Want to be a supplier?{" "}
-                    <Link
-                    href="/register/supplier"
-                    className="text-[13px] font-semibold text-[#2f8f83] hover:underline"
-                    >
-                    Register as Supplier
-                    </Link>
-                </p>
-                </div>
           </div>
-        </div>
+        </form>
       </div>
+    </div>
+  );
+}
+
+// --- FIXED HELPER COMPONENTS WITH TYPES ---
+
+function Input({ label, icon, ...props }: InputProps) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-sm font-medium text-slate-800">{label}</label>
+      <div className="relative">
+        {icon && <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">{icon}</div>}
+        <input {...props} className={`w-full rounded-lg border border-slate-300 py-2.5 ${icon ? 'pl-10' : 'px-3'} text-sm focus:border-[#2f8f83] outline-none`} />
+      </div>
+    </div>
+  );
+}
+
+function FileUpload({ label, file, onChange }: FileUploadProps) {
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-medium text-slate-900">{label}</label>
+      <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 py-6">
+        <input type="file" hidden onChange={onChange} />
+        {file ? (
+          <div className="flex items-center gap-2 text-[#2f8f83]">
+            <CheckCircle2 size={24} />
+            <span className="text-sm">{file.name}</span>
+          </div>
+        ) : (
+          <Upload className="h-7 w-7 text-slate-400" />
+        )}
+      </label>
     </div>
   );
 }
