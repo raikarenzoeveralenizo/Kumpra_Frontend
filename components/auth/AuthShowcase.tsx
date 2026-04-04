@@ -27,7 +27,7 @@ export default function AuthShowcase({
             <Truck className="h-10 w-10 text-white" />
           ) : (
             <img
-              src="/img/kompra_logo.png"
+              src="/img/white_logo.png"
               alt="Kompra.ph"
               className="h-28 w-auto object-contain drop-shadow-md"
             />

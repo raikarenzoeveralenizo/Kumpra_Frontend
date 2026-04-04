@@ -11,14 +11,15 @@ import { motion, AnimatePresence } from "framer-motion";
 
 type LoggedInUser = {
   fullName?: string;
+  full_name?: string;
   email?: string;
 };
 
 export default function Navbar() {
   const router = useRouter();
 
-  const items = useCart((state) => state.items);
-  const uniqueItemCount = items.length;
+  const count = useCart((state) => state.count);
+  const setCount = useCart((state) => state.setCount);
 
   const isFlying = useAnimationStore((state) => state.isFlying);
   const setEndCoords = useAnimationStore((state) => state.setEndCoords);
@@ -31,6 +32,8 @@ export default function Navbar() {
 
   const mobileCartIconRef = useRef<HTMLButtonElement>(null);
   const desktopCartIconRef = useRef<HTMLButtonElement>(null);
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const handleCartClick = () => {
     const user = localStorage.getItem("loggedInUser");
@@ -48,8 +51,77 @@ export default function Navbar() {
     const user = localStorage.getItem("loggedInUser");
     if (user) {
       setLoggedInUser(JSON.parse(user));
+    } else {
+      setLoggedInUser(null);
     }
   }, []);
+
+  useEffect(() => {
+    const syncCartCount = async () => {
+      const token = localStorage.getItem("access");
+
+      if (!token) {
+        setCount(0);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/cart/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.status === 401) {
+          localStorage.removeItem("access");
+          localStorage.removeItem("refresh");
+          localStorage.removeItem("loggedInUser");
+          setLoggedInUser(null);
+          setCount(0);
+          return;
+        }
+
+        if (!res.ok) {
+          setCount(0);
+          return;
+        }
+
+        const data = await res.json();
+
+        const totalCount = Array.isArray(data.items)
+          ? data.items.reduce(
+              (sum: number, item: { quantity: number }) => sum + Number(item.quantity || 0),
+              0
+            )
+          : 0;
+
+        setCount(totalCount);
+      } catch (error) {
+        console.error("Error syncing cart count:", error);
+        setCount(0);
+      }
+    };
+
+    syncCartCount();
+
+    const handleStorageChange = () => {
+      const user = localStorage.getItem("loggedInUser");
+      if (user) {
+        setLoggedInUser(JSON.parse(user));
+      } else {
+        setLoggedInUser(null);
+        setCount(0);
+      }
+
+      syncCartCount();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [API_URL, setCount]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent | TouchEvent) {
@@ -119,20 +191,25 @@ export default function Navbar() {
   }, [setEndCoords]);
 
   const handleLogout = () => {
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
     localStorage.removeItem("loggedInUser");
     setLoggedInUser(null);
+    setCount(0);
     setIsProfileOpen(false);
     router.push("/login");
   };
 
   const displayName =
-    loggedInUser?.fullName || loggedInUser?.email || "Profile";
+    loggedInUser?.fullName ||
+    loggedInUser?.full_name ||
+    loggedInUser?.email ||
+    "Profile";
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#1f5f56] bg-[#1f5f56] backdrop-blur">
       <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 md:flex-row md:items-center md:justify-between md:gap-4 md:py-4">
         
-        {/* Top Row */}
         <div className="flex items-center justify-between gap-3">
           <Link href="/home" className="flex shrink-0 items-center gap-2">
             <img
@@ -146,8 +223,6 @@ export default function Navbar() {
             </span>
           </Link>
 
-
-          {/* Mobile Actions */}
           <div className="flex items-center gap-2 md:hidden">
             <div className="relative">
               <motion.div
@@ -165,14 +240,14 @@ export default function Navbar() {
               </motion.div>
 
               <AnimatePresence>
-                {uniqueItemCount > 0 && (
+                {count > 0 && (
                   <motion.span
                     key="mobile-cart-badge"
                     initial={{ scale: 0 }}
                     animate={isFlying ? { scale: [1, 1.4, 1] } : { scale: 1 }}
                     className="pointer-events-none absolute -right-1 -top-1 z-10 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white ring-2 ring-white"
                   >
-                    {uniqueItemCount > 99 ? "99+" : uniqueItemCount}
+                    {count > 99 ? "99+" : count}
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -220,17 +295,13 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Right / Bottom Section */}
         <div className="flex flex-col gap-3 md:flex-1 md:flex-row md:items-center md:justify-end">
-          
-          {/* Search */}
           <div className="w-full md:mx-3 md:max-w-md lg:max-w-lg">
             <div className="relative w-full">
               <SearchBar />
             </div>
           </div>
 
-          {/* Desktop Nav */}
           <nav className="hidden items-center gap-6 text-sm md:flex">
             <Link
               href="/products"
@@ -242,7 +313,7 @@ export default function Navbar() {
             <Link
               href="/stores"
               className="font-medium text-[#b7e4d8] hover:text-white"
-              >
+            >
               Stores
             </Link>
 
@@ -270,14 +341,14 @@ export default function Navbar() {
               </motion.div>
 
               <AnimatePresence>
-                {uniqueItemCount > 0 && (
+                {count > 0 && (
                   <motion.span
                     key="desktop-cart-badge"
                     initial={{ scale: 0 }}
                     animate={isFlying ? { scale: [1, 1.4, 1] } : { scale: 1 }}
                     className="pointer-events-none absolute -right-2 -top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[11px] font-bold text-white ring-2 ring-white"
                   >
-                    {uniqueItemCount > 99 ? "99+" : uniqueItemCount}
+                    {count > 99 ? "99+" : count}
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -324,7 +395,6 @@ export default function Navbar() {
             )}
           </nav>
 
-          {/* Mobile Links */}
           <div className="flex items-center justify-center gap-5 border-t border-slate-200 pt-2 text-sm md:hidden">
             <Link
               href="/products"

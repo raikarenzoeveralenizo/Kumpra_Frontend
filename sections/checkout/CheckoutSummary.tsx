@@ -1,14 +1,13 @@
 "use client";
 
-import { discountedPrice, formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 
 type CheckoutItem = {
   id: string | number;
   name: string;
-  image?: string;
+  image?: string | null;
   price: number;
-  discountPercent?: number;
-  quantity: number;
+  cartQuantity: number;
 };
 
 type CheckoutSummaryProps = {
@@ -23,9 +22,7 @@ export default function CheckoutSummary({
   mode,
 }: CheckoutSummaryProps) {
   const subtotal = items.reduce((sum, item) => {
-    return (
-      sum + discountedPrice(item.price, item.discountPercent || 0) * item.quantity
-    );
+    return sum + item.price * item.cartQuantity;
   }, 0);
 
   const total = subtotal + deliveryFee;
@@ -41,8 +38,7 @@ export default function CheckoutSummary({
           </p>
         ) : (
           items.map((item) => {
-            const itemPrice = discountedPrice(item.price, item.discountPercent || 0);
-            const itemTotal = itemPrice * item.quantity;
+            const itemTotal = item.price * item.cartQuantity;
 
             return (
               <div key={item.id} className="flex items-center gap-4">
@@ -63,7 +59,7 @@ export default function CheckoutSummary({
                       {item.name}
                     </p>
                     <p className="text-xs font-medium text-slate-500">
-                      Qty: {item.quantity}
+                      Qty: {item.cartQuantity}
                     </p>
                   </div>
 
