@@ -1,6 +1,12 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import CartFlyAnimation from "@/components/ui/CartFlyAnimation";
+import { Poppins } from "next/font/google"; 
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["600"], // SemiBold
+});
 
 export const metadata: Metadata = {
   title: "Multi-Store Ecommerce",
@@ -13,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={poppins.className}>
       <body>
         {children}
         <CartFlyAnimation />

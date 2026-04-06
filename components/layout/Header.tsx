@@ -11,14 +11,15 @@ import { motion, AnimatePresence } from "framer-motion";
 
 type LoggedInUser = {
   fullName?: string;
+  full_name?: string;
   email?: string;
 };
 
 export default function Navbar() {
   const router = useRouter();
 
-  const items = useCart((state) => state.items);
-  const uniqueItemCount = items.length;
+  const count = useCart((state) => state.count);
+  const setCount = useCart((state) => state.setCount);
 
   const isFlying = useAnimationStore((state) => state.isFlying);
   const setEndCoords = useAnimationStore((state) => state.setEndCoords);
@@ -29,15 +30,98 @@ export default function Navbar() {
   const mobileProfileRef = useRef<HTMLDivElement>(null);
   const desktopProfileRef = useRef<HTMLDivElement>(null);
 
-  const mobileCartIconRef = useRef<HTMLAnchorElement>(null);
-  const desktopCartIconRef = useRef<HTMLAnchorElement>(null);
+  const mobileCartIconRef = useRef<HTMLButtonElement>(null);
+  const desktopCartIconRef = useRef<HTMLButtonElement>(null);
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+  const handleCartClick = () => {
+    const user = localStorage.getItem("loggedInUser");
+
+    if (!user) {
+      localStorage.setItem("redirect_after_login", "/cart");
+      router.push("/login");
+      return;
+    }
+
+    router.push("/cart");
+  };
 
   useEffect(() => {
     const user = localStorage.getItem("loggedInUser");
     if (user) {
       setLoggedInUser(JSON.parse(user));
+    } else {
+      setLoggedInUser(null);
     }
   }, []);
+
+  useEffect(() => {
+    const syncCartCount = async () => {
+      const token = localStorage.getItem("access");
+
+      if (!token) {
+        setCount(0);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/cart/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.status === 401) {
+          localStorage.removeItem("access");
+          localStorage.removeItem("refresh");
+          localStorage.removeItem("loggedInUser");
+          setLoggedInUser(null);
+          setCount(0);
+          return;
+        }
+
+        if (!res.ok) {
+          setCount(0);
+          return;
+        }
+
+        const data = await res.json();
+
+        const totalCount = Array.isArray(data.items)
+          ? data.items.reduce(
+              (sum: number, item: { quantity: number }) => sum + Number(item.quantity || 0),
+              0
+            )
+          : 0;
+
+        setCount(totalCount);
+      } catch (error) {
+        console.error("Error syncing cart count:", error);
+        setCount(0);
+      }
+    };
+
+    syncCartCount();
+
+    const handleStorageChange = () => {
+      const user = localStorage.getItem("loggedInUser");
+      if (user) {
+        setLoggedInUser(JSON.parse(user));
+      } else {
+        setLoggedInUser(null);
+        setCount(0);
+      }
+
+      syncCartCount();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [API_URL, setCount]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent | TouchEvent) {
@@ -70,7 +154,7 @@ export default function Navbar() {
       const mobileEl = mobileCartIconRef.current;
       const desktopEl = desktopCartIconRef.current;
 
-      const isActuallyVisible = (el: HTMLAnchorElement | null) => {
+      const isActuallyVisible = (el: HTMLElement | null) => {
         if (!el) return false;
 
         const rect = el.getBoundingClientRect();
@@ -78,7 +162,7 @@ export default function Navbar() {
         return el.offsetParent !== null && rect.width > 0 && rect.height > 0;
       };
 
-      let activeEl: HTMLAnchorElement | null = null;
+      let activeEl: HTMLElement | null = null;
 
       if (isActuallyVisible(mobileEl)) {
         activeEl = mobileEl;
@@ -107,54 +191,63 @@ export default function Navbar() {
   }, [setEndCoords]);
 
   const handleLogout = () => {
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
     localStorage.removeItem("loggedInUser");
     setLoggedInUser(null);
+    setCount(0);
     setIsProfileOpen(false);
     router.push("/login");
   };
 
   const displayName =
-    loggedInUser?.fullName || loggedInUser?.email || "Profile";
+    loggedInUser?.fullName ||
+    loggedInUser?.full_name ||
+    loggedInUser?.email ||
+    "Profile";
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-[#1f5f56] bg-[#1f5f56] backdrop-blur">
       <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 md:flex-row md:items-center md:justify-between md:gap-4 md:py-4">
         
-        {/* Top Row */}
         <div className="flex items-center justify-between gap-3">
-          <Link href="/home" className="flex shrink-0 items-center">
+          <Link href="/home" className="flex shrink-0 items-center gap-2">
             <img
-              src="/img/kompra_logo.png"
+              src="/img/white_logo.png"
               alt="Kompra.ph"
-              className="h-6 w-auto sm:h-8"
+              className="h-10 w-auto sm:h-12"
             />
+
+            <span className="text-white text-lg sm:text-xl font-semibold tracking-tight">
+              Kompra.ph
+            </span>
           </Link>
 
-          {/* Mobile Actions */}
           <div className="flex items-center gap-2 md:hidden">
             <div className="relative">
               <motion.div
                 animate={isFlying ? { scale: [1, 1.2, 1] } : { scale: 1 }}
                 transition={{ duration: 0.4 }}
               >
-                <Link
-                  ref={mobileCartIconRef}
-                  href="/cart"
-                  className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-600 transition hover:bg-gray-100 hover:text-black"
+                <button
+                  ref={mobileCartIconRef as any}
+                  type="button"
+                  onClick={handleCartClick}
+                  className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[#b7e4d8] hover:bg-white/10 hover:text-white"
                 >
                   <ShoppingCart className="h-5 w-5" />
-                </Link>
+                </button>
               </motion.div>
 
               <AnimatePresence>
-                {uniqueItemCount > 0 && (
+                {count > 0 && (
                   <motion.span
                     key="mobile-cart-badge"
                     initial={{ scale: 0 }}
                     animate={isFlying ? { scale: [1, 1.4, 1] } : { scale: 1 }}
                     className="pointer-events-none absolute -right-1 -top-1 z-10 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white ring-2 ring-white"
                   >
-                    {uniqueItemCount > 99 ? "99+" : uniqueItemCount}
+                    {count > 99 ? "99+" : count}
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -202,35 +295,31 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Right / Bottom Section */}
         <div className="flex flex-col gap-3 md:flex-1 md:flex-row md:items-center md:justify-end">
-          
-          {/* Search */}
           <div className="w-full md:mx-3 md:max-w-md lg:max-w-lg">
             <div className="relative w-full">
               <SearchBar />
             </div>
           </div>
 
-          {/* Desktop Nav */}
           <nav className="hidden items-center gap-6 text-sm md:flex">
             <Link
               href="/products"
-              className="font-medium text-gray-600 transition hover:text-black"
+              className="font-medium text-[#b7e4d8] hover:text-white"
             >
               Products
             </Link>
 
             <Link
               href="/stores"
-              className="font-medium text-gray-600 transition hover:text-black"
+              className="font-medium text-[#b7e4d8] hover:text-white"
             >
               Stores
             </Link>
 
             <Link
               href="/ai"
-              className="inline-flex items-center gap-1.5 font-medium text-[#2f8f83] transition hover:text-[#26776d]"
+              className="inline-flex items-center gap-1.5 font-medium text-[#b7e4d8] hover:text-white"
             >
               <Sparkles className="h-4 w-4" />
               AI
@@ -241,24 +330,25 @@ export default function Navbar() {
                 animate={isFlying ? { scale: [1, 1.2, 1] } : { scale: 1 }}
                 transition={{ duration: 0.4 }}
               >
-                <Link
-                  ref={desktopCartIconRef}
-                  href="/cart"
-                  className="relative flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition hover:bg-gray-100 hover:text-black"
+                <button
+                  ref={desktopCartIconRef as any}
+                  type="button"
+                  onClick={handleCartClick}
+                  className="relative flex h-10 w-10 items-center justify-center rounded-lg text-[#b7e4d8] hover:bg-white/10 hover:text-white"
                 >
                   <ShoppingCart className="h-5 w-5" />
-                </Link>
+                </button>
               </motion.div>
 
               <AnimatePresence>
-                {uniqueItemCount > 0 && (
+                {count > 0 && (
                   <motion.span
                     key="desktop-cart-badge"
                     initial={{ scale: 0 }}
                     animate={isFlying ? { scale: [1, 1.4, 1] } : { scale: 1 }}
                     className="pointer-events-none absolute -right-2 -top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[11px] font-bold text-white ring-2 ring-white"
                   >
-                    {uniqueItemCount > 99 ? "99+" : uniqueItemCount}
+                    {count > 99 ? "99+" : count}
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -268,7 +358,7 @@ export default function Navbar() {
               <div className="relative" ref={desktopProfileRef}>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#b7e4d8]/30 bg-[#b7e4d8]/10 px-4 py-2 text-sm font-medium text-[#b7e4d8]"
                 >
                   <User size={18} />
                   <span className="max-w-35 truncate">{displayName}</span>
@@ -297,7 +387,7 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-[#de922f] hover:text-white"
+                className="inline-flex items-center gap-2 rounded-xl border border-[#b7e4d8]/30 bg-[#b7e4d8]/10 px-4 py-2 text-sm font-medium text-[#b7e4d8]"
               >
                 <User size={18} />
                 Login
@@ -305,25 +395,24 @@ export default function Navbar() {
             )}
           </nav>
 
-          {/* Mobile Links */}
           <div className="flex items-center justify-center gap-5 border-t border-slate-200 pt-2 text-sm md:hidden">
             <Link
               href="/products"
-              className="font-medium text-gray-600 transition hover:text-black"
+              className="font-medium text-[#b7e4d8] hover:text-white"
             >
               Products
             </Link>
 
             <Link
               href="/stores"
-              className="font-medium text-gray-600 transition hover:text-black"
+              className="font-medium text-[#b7e4d8] hover:text-white"
             >
               Stores
             </Link>
 
             <Link
               href="/ai"
-              className="inline-flex items-center gap-1 text-[#2f8f83] transition hover:text-[#26776d]"
+              className="font-medium text-[#b7e4d8] hover:text-white"
             >
               <Sparkles className="h-4 w-4" />
               AI

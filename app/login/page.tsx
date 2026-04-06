@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Mail, Lock, Loader2 } from "lucide-react";
+import { Mail, Lock, Loader2, Store, Truck } from "lucide-react";
 import AuthShowcase from "@/components/auth/AuthShowcase";
 
 export default function LoginPage() {
   const router = useRouter();
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +27,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/login/", {
+      const response = await fetch(`${API_URL}/login/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -40,7 +41,6 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // 1. Store the whole user object (for UI/Navbar)
         localStorage.setItem(
           "loggedInUser",
           JSON.stringify({
@@ -50,17 +50,20 @@ export default function LoginPage() {
             phone: data.user.contact_number,
             gender: data.user.gender,
             birthday: data.user.date_of_birth,
-            access: data.access,
-            refresh: data.refresh,
           })
         );
 
-        // 2. CRITICAL: Store the access token separately for the Address Form
-        // Your Django LoginView returns the token in "data.access"
-        localStorage.setItem("access_token", data.access);
-        localStorage.setItem("refresh_token", data.refresh);
+        localStorage.setItem("access", data.access);
+        localStorage.setItem("refresh", data.refresh);
 
-        router.push("/home");
+        const redirectPath = localStorage.getItem("redirect_after_login");
+
+        if (redirectPath) {
+          localStorage.removeItem("redirect_after_login");
+          router.push(redirectPath);
+        } else {
+          router.push("/home");
+        }
       } else {
         setError(data.error || "Invalid email or password.");
       }
@@ -78,7 +81,7 @@ export default function LoginPage() {
       <div className="flex min-h-screen w-full items-center justify-center px-4 py-6 sm:px-6 lg:w-1/2 lg:px-10">
         <div className="w-full max-w-sm">
           <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
-            <h2 className="text-2xl font-bold text-[#1e3a8a]">Welcome Back</h2>
+            <h2 className="text-2xl font-bold text-brand-blue">Welcome Back</h2>
             <p className="mt-1 text-sm leading-5 text-slate-500">
               Log in to continue your shopping experience.
             </p>
@@ -125,7 +128,7 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 border border-red-100">
+                <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-600">
                   {error}
                 </p>
               )}
@@ -155,6 +158,37 @@ export default function LoginPage() {
                 Sign Up
               </Link>
             </p>
+
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-white px-3 text-[13px] text-slate-500">
+                    Register as a business partner
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <Link
+                  href="/register/store-seller"
+                  className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-all duration-200 hover:border-[#de922f] hover:bg-[#de922f] hover:text-white"
+                >
+                  <Store className="h-4 w-4" />
+                  Store Seller
+                </Link>
+
+                <Link
+                  href="/register/supplier"
+                  className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-all duration-200 hover:border-[#de922f] hover:bg-[#de922f] hover:text-white"
+                >
+                  <Truck className="h-4 w-4" />
+                  Supplier
+                </Link>
+              </div>
+            </div>
 
             <Link
               href="/"

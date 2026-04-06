@@ -94,6 +94,7 @@ export default function RegisterPage() {
           gender: gender,
           date_of_birth: dateOfBirth,
           password: password,
+          role: "CUSTOMER",
         }),
       });
 

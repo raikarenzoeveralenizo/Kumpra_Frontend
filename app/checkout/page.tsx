@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Truck, Store, X, MapPin } from "lucide-react";
 import { useCart } from "@/store/useCart";
 import PaymentMethod from "@/components/checkout/PaymentMethod";
+import type { ApiOutlet } from "@/types/api-outlet";
 
 type AddressItem = {
   id: number;
@@ -28,67 +29,247 @@ type AddressItem = {
   is_default: boolean;
 };
 
+type CheckoutCartItem = {
+  id: number;
+  product_id: number;
+  branch_id: number | null;
+  product_name: string;
+  image: string | null;
+  outlet_name: string | null;
+  quantity: number;
+  unit_price: string;
+  subtotal: string;
+};
+
+type CartResponse = {
+  id: number;
+  items: CheckoutCartItem[];
+  total_quantity: number;
+  total_amount: number;
+  created_at: string;
+  updated_at: string;
+};
+
+type CheckoutResponse = {
+  id: number;
+  transactionnumber: string;
+  subtotal: number;
+  total: number;
+  status: string;
+  paymentmethod: string;
+  paymentstatus: string;
+  customernote: string;
+  createdat: string;
+  items: unknown[];
+  tracking: unknown[];
+};
+
 export default function CheckoutPage() {
   const router = useRouter();
 
   const [mode, setMode] = useState<"delivery" | "pickup" | null>(null);
-  const [selectedStore, setSelectedStore] = useState<any | null>(null);
+  const [selectedStore, setSelectedStore] = useState<ApiOutlet | null>(null);
   const [selectedAddress, setSelectedAddress] = useState<AddressItem | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "online" | null>(null);
   const [onlinePaymentOption, setOnlinePaymentOption] = useState<string | null>(null);
   const [deliveryFee, setDeliveryFee] = useState(0);
 
-  const { items } = useCart();
+  const [cart, setCart] = useState<CartResponse | null>(null);
+  const [loadingCart, setLoadingCart] = useState(true);
+  const [placingOrder, setPlacingOrder] = useState(false);
+
+  const clearCart = useCart((state) => state.clearCart);
+  const setCount = useCart((state) => state.setCount);
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const items = cart?.items || [];
+
+  const summaryItems = items.map((item) => ({
+    id: item.id,
+    name: item.product_name,
+    image: item.image,
+    price: Number(item.unit_price),
+    cartQuantity: item.quantity,
+  }));
+
+  useEffect(() => {
+    const fetchCart = async () => {
+      const token = localStorage.getItem("access");
+
+      if (!token) {
+        localStorage.setItem("redirect_after_login", "/checkout");
+        router.push("/login");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/cart/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.status === 401) {
+          localStorage.removeItem("access");
+          localStorage.removeItem("refresh");
+          localStorage.removeItem("loggedInUser");
+          clearCart();
+          setCount(0);
+          router.push("/login");
+          return;
+        }
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Failed to fetch cart: ${res.status} - ${text}`);
+        }
+
+        const data: CartResponse = await res.json();
+        setCart(data);
+        setCount(data.total_quantity || 0);
+      } catch (error) {
+        console.error("Error fetching checkout cart:", error);
+        setCart(null);
+      } finally {
+        setLoadingCart(false);
+      }
+    };
+
+    fetchCart();
+  }, [API_URL, clearCart, router, setCount]);
 
   const canPlaceOrder =
-    mode === "delivery"
+    items.length > 0 &&
+    !placingOrder &&
+    (mode === "delivery"
       ? !!selectedAddress &&
         !!paymentMethod &&
         (paymentMethod === "cod" || !!onlinePaymentOption)
       : mode === "pickup"
       ? !!selectedStore
-      : false;
+      : false);
 
-  const handlePlaceOrder = () => {
+  const getErrorMessage = (data: any) => {
+    if (!data) return "Failed to place order.";
+    if (typeof data.error === "string") return data.error;
+    if (typeof data.detail === "string") return data.detail;
+    if (Array.isArray(data.non_field_errors) && data.non_field_errors.length > 0) {
+      return data.non_field_errors[0];
+    }
+    if (typeof data === "string") return data;
+    return "Failed to place order.";
+  };
+
+  const handlePlaceOrder = async () => {
     if (!canPlaceOrder || !mode) return;
 
-    const orderId = `o${Date.now()}`;
-    const orderNumber = `KMP-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const token = localStorage.getItem("access");
 
-    const fullAddress = selectedAddress
-      ? `${selectedAddress.street_address}, ${selectedAddress.barangay}, ${selectedAddress.city}, ${selectedAddress.province}, ${selectedAddress.region}, ${selectedAddress.postal_code}`
-      : "";
+    if (!token) {
+      localStorage.setItem("redirect_after_login", "/checkout");
+      router.push("/login");
+      return;
+    }
 
-    const checkoutOrder = {
-      id: orderId,
-      orderNumber,
-      orderType: mode,
-      assignedStore: selectedStore?.name || "Downtown Fresh Market",
-      estimatedDeliveryTime: mode === "pickup" ? "15-20 mins" : "25-40 mins",
-      status: mode === "pickup" ? "Preparing Item" : "Preparing for Delivery",
-      currentStep: 1,
-      deliveryAddress: fullAddress,
-      paymentMethod:
+    const outletId =
+      mode === "pickup"
+        ? selectedStore?.id ?? null
+        : items.length > 0
+        ? items[0].branch_id
+        : null;
+
+    if (!outletId) {
+      alert("Please select a valid store or branch before placing the order.");
+      return;
+    }
+
+    const payload = {
+      outlet_id: outletId,
+      delivery_address_id: mode === "delivery" ? (selectedAddress?.id ?? null) : null,
+      order_type: mode === "delivery" ? "DELIVERY" : "PICKUP",
+      payment_method:
         mode === "pickup"
-          ? "Pay at Store"
+          ? "PAY_AT_STORE"
           : paymentMethod === "cod"
-          ? "Cash On Delivery"
-          : onlinePaymentOption || "Online Payment",
-      deliveryFee: mode === "delivery" ? deliveryFee : 0,
-      selectedStore,
-      selectedAddress,
+          ? "COD"
+          : onlinePaymentOption || "ONLINE",
+      customer_note: "",
     };
 
-    localStorage.setItem("latest_checkout_order", JSON.stringify(checkoutOrder));
-    router.push(`/tracking/${orderId}`);
+    try {
+      setPlacingOrder(true);
+
+      const res = await fetch(`${API_URL}/checkout/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responseText = await res.text();
+      let data: CheckoutResponse | any = null;
+
+      try {
+        data = responseText ? JSON.parse(responseText) : null;
+      } catch {
+        console.error("Non-JSON checkout response:", responseText);
+        throw new Error("Backend returned an invalid response. Check Django terminal.");
+      }
+
+      console.log("CHECKOUT RESPONSE:", {
+        status: res.status,
+        ok: res.ok,
+        data,
+      });
+
+      if (res.status === 401) {
+        localStorage.removeItem("access");
+        localStorage.removeItem("refresh");
+        localStorage.removeItem("loggedInUser");
+        clearCart();
+        setCount(0);
+        router.push("/login");
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error(getErrorMessage(data));
+      }
+
+      clearCart();
+      setCount(0);
+      setCart(null);
+      localStorage.removeItem("latest_checkout_order");
+
+      router.push(`/tracking/${data.id}`);
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert(error instanceof Error ? error.message : "Failed to place order.");
+    } finally {
+      setPlacingOrder(false);
+    }
   };
+
+  if (loadingCart) {
+    return (
+      <main className="min-h-screen bg-[#f7f7f5]">
+        <Header />
+        <section className="container-shell py-20 text-center text-slate-500">
+          Loading checkout...
+        </section>
+        <Footer />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#f7f7f5]">
       <Header />
 
       <section className="container-shell py-8">
-        <h1 className="text-3xl font-serif font-bold text-brand-blue tracking-tight md:text-[32px]">
+        <h1 className="text-3xl font-serif font-bold tracking-tight text-brand-blue md:text-[32px]">
           Checkout
         </h1>
 
@@ -211,7 +392,7 @@ export default function CheckoutPage() {
                             {selectedStore.name}
                           </p>
                           <p className="mt-0.5 text-xs text-slate-500">
-                            {selectedStore.address}
+                            {selectedStore.address || selectedStore.branch_address}
                           </p>
                         </div>
                         <MapPin className="h-4 w-4 text-[#3a9688] opacity-40" />
@@ -219,7 +400,7 @@ export default function CheckoutPage() {
                     )}
 
                     <PickupBranchSelector
-                      onSelect={(store: any) => setSelectedStore(store)}
+                      onSelect={(store) => setSelectedStore(store)}
                       selectedStore={selectedStore}
                     />
                   </div>
@@ -237,8 +418,9 @@ export default function CheckoutPage() {
           <div className="relative">
             <div className="sticky top-24 space-y-4">
               <CheckoutSummary
-                items={items}
+                items={summaryItems}
                 deliveryFee={mode === "delivery" ? deliveryFee : 0}
+                mode={mode}
               />
 
               <button
@@ -247,11 +429,11 @@ export default function CheckoutPage() {
                 disabled={!canPlaceOrder}
                 className={`flex w-full items-center justify-center rounded-xl py-3 text-base font-bold text-white transition-all ${
                   canPlaceOrder
-                    ? "bg-[#3a9688] shadow-lg shadow-[#3a9688]/20 hover:bg-[#148a78]"
+                    ? "bg-[#1f5f56] shadow-lg shadow-[#3a9688]/20 hover:bg-[#148a78]"
                     : "pointer-events-none cursor-not-allowed bg-slate-300"
                 }`}
               >
-                Place Order
+                {placingOrder ? "Placing Order..." : "Place Order"}
               </button>
             </div>
           </div>

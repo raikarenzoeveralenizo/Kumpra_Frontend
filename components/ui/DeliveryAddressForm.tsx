@@ -43,7 +43,7 @@ export default function DeliveryAddressForm({
   const API_URL = "http://localhost:8000/api/addresses/";
 
   const getFreshToken = () =>
-    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  typeof window !== "undefined" ? localStorage.getItem("access") : null;
 
   useEffect(() => {
     const fetchAddresses = async () => {
