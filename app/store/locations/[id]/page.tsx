@@ -20,21 +20,36 @@ export default async function LocationPage({
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const isBranch = type === "branch";
 
+  const locationUrl = `${API_URL}/${isBranch ? "branches" : "outlets"}/${id}/`;
+  const productsUrl = `${API_URL}/products/?outlet=${id}`;
+
+  console.log("LOCATION URL:", locationUrl);
+  console.log("PRODUCTS URL:", productsUrl);
+
   const [locationRes, productsRes] = await Promise.all([
-    fetch(`${API_URL}/${isBranch ? "branches" : "outlets"}/${id}/`, {
-      cache: "no-store",
-    }),
-    fetch(`${API_URL}/products/?outlet=${id}`, {
-      cache: "no-store",
-    }),
+    fetch(locationUrl, { cache: "no-store" }),
+    fetch(productsUrl, { cache: "no-store" }),
   ]);
 
+  console.log("LOCATION STATUS:", locationRes.status);
+  console.log("PRODUCTS STATUS:", productsRes.status);
+
   if (!locationRes.ok || !productsRes.ok) {
+    const locationText = await locationRes.text().catch(() => "");
+    const productsText = await productsRes.text().catch(() => "");
+
+    console.log("LOCATION ERROR BODY:", locationText);
+    console.log("PRODUCTS ERROR BODY:", productsText);
+
     return (
       <main className="min-h-screen bg-[#f7f7f5]">
         <Header />
         <section className="container-shell px-4 py-8 md:px-0">
-          <p className="text-center font-bold">Failed to load location</p>
+          <div className="space-y-2 text-center">
+            <p className="font-bold">Failed to load location</p>
+            <p className="text-sm text-slate-500">Location status: {locationRes.status}</p>
+            <p className="text-sm text-slate-500">Products status: {productsRes.status}</p>
+          </div>
         </section>
         <Footer />
       </main>

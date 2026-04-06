@@ -20,29 +20,35 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
 
   const router = useRouter();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const API_BASE_URL = API_URL?.replace("/api", "") || "";
 
-  const productId = product.id;
-  const productLinkId = product.id;
+  const productId = product.inventory_item_id;
+  const productLinkId = product.inventory_item_id;
+
+  const getImageUrl = (image: string | null) => {
+    if (!image) return "/img/placeholder.jpg";
+    if (image.startsWith("http")) return image;
+    return `${API_BASE_URL}${image.startsWith("/") ? image : `/${image}`}`;
+  };
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const user = localStorage.getItem("loggedInUser");
     const token = localStorage.getItem("access");
 
     console.log("PRODUCT CARD ADD TO CART DEBUG:", {
       fullProduct: product,
-      sentProductId: product.id,
-      sentProductProductId: product.product_id,
+      sentInventoryItemId: product.inventory_item_id,
+      sentProductId: product.product_id,
       sentBranchId: product.outlet_id ?? null,
     });
 
-      if (!token) {
-        localStorage.setItem("redirect_after_login", `/product/${productLinkId}`);
-        router.push("/login");
-        return;
-      }
+    if (!token) {
+      localStorage.setItem("redirect_after_login", `/product/${productLinkId}`);
+      router.push("/login");
+      return;
+    }
 
     try {
       setIsAdding(true);
@@ -54,7 +60,6 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
           rect.top + rect.height / 2
         );
       }
-
 
       const res = await fetch(`${API_URL}/cart/add/`, {
         method: "POST",
@@ -102,7 +107,7 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
     >
       <div className="aspect-square overflow-hidden bg-[#f8fafc]">
         <img
-          src={product.image || "/img/placeholder.jpg"}
+          src={getImageUrl(product.image)}
           alt={product.name}
           className="h-full w-full object-cover transition group-hover:scale-105"
         />
@@ -121,9 +126,7 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
           {formatPrice(product.price)}
         </p>
 
-        <p className="text-xs text-slate-400">
-          Stock: {product.quantity}
-        </p>
+        <p className="text-xs text-slate-400">Stock: {product.quantity}</p>
 
         <div className="mt-3 flex justify-end" ref={buttonRef}>
           <motion.button

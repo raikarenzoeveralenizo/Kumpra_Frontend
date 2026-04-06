@@ -7,46 +7,62 @@ import ProductGrid from "@/components/ui/ProductGrid";
 import { Search, SlidersHorizontal } from "lucide-react";
 import type { ApiProduct } from "@/types/api-product";
 
-type Product = {
-  id: number;
-  product_id: number;
-  name: string;
-  image: string | null;
-  description: string | null;
-  category: string | null;
-  brand: string | null;
-  price: number;
-  quantity: number;
-  outlet_id: number;
-  outlet_name: string;
-  outlet_address: string;
-  branch_name?: string | null;
-};
-
 export default function ProductsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [maxPrice, setMaxPrice] = useState(1000);
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ApiProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-    fetch(`${API_URL}/products/`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch products");
+    const loadProducts = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        if (!API_URL) {
+          throw new Error("NEXT_PUBLIC_API_URL is missing");
         }
-        return res.json();
-      })
-      .then((data) => {
+
+        console.log("API_URL:", API_URL);
+        console.log("FETCHING:", `${API_URL}/products/`);
+
+        const res = await fetch(`${API_URL}/products/`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          cache: "no-store",
+        });
+
+        console.log("PRODUCTS STATUS:", res.status);
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("PRODUCTS ERROR RESPONSE:", errorText);
+          throw new Error(`Failed to fetch products. Status: ${res.status}`);
+        }
+
+        const data: ApiProduct[] = await res.json();
         console.log("PRODUCTS API DATA:", data);
-        setProducts(data);
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
+
+        setProducts(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("LOAD PRODUCTS ERROR:", err);
+        setProducts([]);
+        setError(
+          err instanceof Error ? err.message : "Failed to load products"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
   }, []);
 
   const filteredProducts = products.filter((product) => {
@@ -54,7 +70,7 @@ export default function ProductsPage() {
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
 
-    const matchesPrice = product.price <= maxPrice;
+    const matchesPrice = Number(product.price) <= maxPrice;
 
     return matchesSearch && matchesPrice;
   });
@@ -111,13 +127,29 @@ export default function ProductsPage() {
         )}
 
         {loading ? (
-          <div className="py-20 text-center text-slate-500">Loading products...</div>
+          <div className="py-20 text-center text-slate-500">
+            Loading products...
+          </div>
+        ) : error ? (
+          <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
+            <p className="text-lg font-medium text-red-600">
+              Failed to load products
+            </p>
+            <p className="mt-2 text-slate-500">{error}</p>
+            <p className="mt-2 text-sm text-slate-400">
+              Check your backend server, API URL, and Django console.
+            </p>
+          </div>
         ) : filteredProducts.length > 0 ? (
           <ProductGrid items={filteredProducts} />
         ) : (
           <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-            <p className="text-lg font-medium text-slate-900">No products found</p>
-            <p className="text-slate-500">Try adjusting your filters or search terms.</p>
+            <p className="text-lg font-medium text-slate-900">
+              No products found
+            </p>
+            <p className="text-slate-500">
+              Try adjusting your filters or search terms.
+            </p>
             <button
               onClick={() => {
                 setSearchQuery("");

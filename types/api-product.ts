@@ -1,5 +1,5 @@
 export type ApiProduct = {
-  id: number;
+  inventory_item_id: number;
   product_id: number;
   name: string;
   image: string | null;

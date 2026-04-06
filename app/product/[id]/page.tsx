@@ -39,15 +39,13 @@ export default function ProductDetailPage({
   );
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-  
+  const API_BASE_URL = API_URL?.replace("/api", "") || "";
 
   useEffect(() => {
     const loadProduct = async () => {
       try {
         console.log("DETAIL ID:", id);
         console.log("DETAIL URL:", `${API_URL}/products/${id}/`);
-        
 
         const res = await fetch(`${API_URL}/products/${id}/`);
         if (!res.ok) {
@@ -65,7 +63,9 @@ export default function ProductDetailPage({
       }
     };
 
-    loadProduct();
+    if (API_URL) {
+      loadProduct();
+    }
   }, [API_URL, id]);
 
   const increment = () => {
@@ -78,19 +78,29 @@ export default function ProductDetailPage({
     setQuantity((q) => (q > 1 ? q - 1 : 1));
   };
 
+  const getImageUrl = (image: string | null) => {
+    if (!image) return "/img/placeholder.jpg";
+    if (image.startsWith("http")) return image;
+    return `${API_BASE_URL}${image.startsWith("/") ? image : `/${image}`}`;
+  };
+
   const handleAddToCartWithAnimation = async () => {
     if (!product || isAddingToCart) return;
 
     const token = localStorage.getItem("access");
+
     console.log("DETAIL PAGE ADD TO CART DEBUG:", {
       fullProduct: product,
-      sentProductId: product.id,
-      sentProductProductId: product.product_id,
+      sentInventoryItemId: product.inventory_item_id,
+      sentProductId: product.product_id,
       sentBranchId: product.outlet_id ?? null,
     });
 
     if (!token) {
-      localStorage.setItem("redirect_after_login", `/product/${product.id}`);
+      localStorage.setItem(
+        "redirect_after_login",
+        `/product/${product.inventory_item_id}`
+      );
       router.push("/login");
       return;
     }
@@ -112,7 +122,7 @@ export default function ProductDetailPage({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          product_id: product.id,
+          product_id: product.inventory_item_id,
           quantity: quantity,
           branch_id: product.outlet_id ?? null,
         }),
@@ -177,21 +187,11 @@ export default function ProductDetailPage({
           <div className="flex justify-center">
             <div className="w-full max-w-95 overflow-hidden rounded-2xl bg-[#fce4ec] shadow-sm md:max-w-105">
               <div className="aspect-square">
-                {product.image ? (
-                  <img
-                    src={
-                      product.image?.startsWith("http")
-                        ? product.image
-                        : `${process.env.NEXT_PUBLIC_API_URL?.replace("/api", "")}${product.image?.startsWith("/") ? product.image : `/${product.image}`}`
-                    }
-                    alt={product.name}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-slate-400 italic">
-                    Product Image
-                  </div>
-                )}
+                <img
+                  src={getImageUrl(product.image)}
+                  alt={product.name}
+                  className="h-full w-full object-cover"
+                />
               </div>
             </div>
           </div>
@@ -266,12 +266,17 @@ export default function ProductDetailPage({
                   const token = localStorage.getItem("access");
 
                   if (!token) {
-                    localStorage.setItem("redirect_after_login", `/product/${product.id}`);
+                    localStorage.setItem(
+                      "redirect_after_login",
+                      `/product/${product.inventory_item_id}`
+                    );
                     router.push("/login");
                     return;
                   }
 
-                  router.push(`/checkout?directBuy=true&productId=${product.id}&qty=${quantity}`);
+                  router.push(
+                    `/checkout?directBuy=true&productId=${product.inventory_item_id}&qty=${quantity}`
+                  );
                 }}
                 className="flex flex-1 items-center justify-center rounded-md bg-[#faf3e8] py-3.5 text-sm font-medium text-[#8a5a2b] hover:bg-[#f5ebd8]"
               >
