@@ -153,29 +153,37 @@ export default function ProductDetailPage({
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#f7f7f5]">
+      <main className="min-h-screen flex flex-col bg-[#f7f7f5]">
         <Header />
-        <div className="p-20 text-center text-slate-500">Loading product...</div>
-        <Footer />
+
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-center text-slate-500 text-lg">Loading product...</p>
+        </div>
+
+        
       </main>
     );
   }
 
   if (!product) {
     return (
-      <main className="min-h-screen bg-[#f7f7f5]">
+      <main className="min-h-screen flex flex-col bg-[#f7f7f5]">
         <Header />
-        <div className="p-20 text-center text-slate-500">Product not found</div>
-        <Footer />
+
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-center text-slate-500 text-lg">Product not found</p>
+        </div>
+
+        
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5]">
+    <main className="min-h-screen flex flex-col bg-[#f7f7f5]">
       <Header />
 
-      <section className="container-shell py-7">
+      <section className="flex-1 container-shell py-7">
         <Link
           href="/products"
           className="mb-6 flex items-center gap-1 text-sm text-slate-500 transition-colors hover:text-brand-blue"

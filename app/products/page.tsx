@@ -168,11 +168,22 @@ export default function ProductsPage() {
       ? Math.max(...products.map((product) => Number(product.price) || 0))
       : 1000;
 
+  if (loading) {
+    return (
+      <main className="min-h-screen flex flex-col bg-[#f7f7f5]">
+        <Header />
+        <section className="flex-1 flex items-center justify-center">
+          <p className="text-slate-500 text-lg">Loading products...</p>
+        </section>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-[#f7f7f5]">
+    <main className="min-h-screen flex flex-col bg-[#f7f7f5]">
       <Header />
 
-      <section className="container-shell py-8">
+      <section className="flex-1 container-shell py-8">
         <h1 className="mb-6 font-serif text-3xl font-bold text-slate-900">
           Products
         </h1>
@@ -306,11 +317,7 @@ export default function ProductsPage() {
           </div>
         )}
 
-        {loading ? (
-          <div className="py-20 text-center text-slate-500">
-            Loading products...
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
             <p className="text-lg font-medium text-red-600">
               Failed to load products

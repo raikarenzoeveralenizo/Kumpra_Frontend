@@ -11,6 +11,7 @@ import { useAnimationStore } from "@/store/useAnimationStore";
 import { useRouter } from "next/navigation";
 
 export default function ProductCard({ product }: { product: ApiProduct }) {
+  const count = useCart((state) => state.count);
   const setCount = useCart((state) => state.setCount);
   const triggerFlyToCart = useAnimationStore((state) => state.triggerFlyToCart);
 
@@ -50,6 +51,8 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
       return;
     }
 
+    const previousCount = count;
+
     try {
       setIsAdding(true);
 
@@ -60,6 +63,8 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
           rect.top + rect.height / 2
         );
       }
+
+      setCount(previousCount + 1);
 
       const res = await fetch(`${API_URL}/cart/add/`, {
         method: "POST",
@@ -77,16 +82,20 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
       const data = await res.json();
 
       if (!res.ok) {
+        setCount(previousCount);
         throw new Error(data?.error || "Failed to add to cart.");
       }
 
-      const totalCount = Array.isArray(data.items)
-        ? data.items.reduce(
-            (sum: number, item: { quantity: number }) =>
-              sum + Number(item.quantity || 0),
-            0
-          )
-        : 0;
+      const totalCount =
+        typeof data.total_quantity === "number"
+          ? data.total_quantity
+          : Array.isArray(data.items)
+          ? data.items.reduce(
+              (sum: number, item: { quantity: number }) =>
+                sum + Number(item.quantity || 0),
+              0
+            )
+          : previousCount + 1;
 
       setCount(totalCount);
 
@@ -94,6 +103,7 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
       setTimeout(() => setIsAnimating(false), 800);
     } catch (error) {
       console.error("Add to cart error:", error);
+      setCount(previousCount);
       alert(error instanceof Error ? error.message : "Failed to add to cart.");
     } finally {
       setIsAdding(false);
