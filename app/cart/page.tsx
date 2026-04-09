@@ -42,6 +42,27 @@ export default function CartPage() {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+  const recalculateCart = (items: CartItem[]): CartResponse | null => {
+    if (!cart) return null;
+
+    const total_quantity = items.reduce(
+      (sum, item) => sum + Number(item.quantity || 0),
+      0
+    );
+
+    const total_amount = items.reduce(
+      (sum, item) => sum + Number(item.subtotal || 0),
+      0
+    );
+
+    return {
+      ...cart,
+      items,
+      total_quantity,
+      total_amount,
+    };
+  };
+
   const fetchCart = useCallback(async () => {
     const token = localStorage.getItem("access");
 
@@ -96,7 +117,10 @@ export default function CartPage() {
     fetchCart();
   }, [fetchCart]);
 
-  const handleButtonFlash = (itemId: string | number, type: "plus" | "minus") => {
+  const handleButtonFlash = (
+    itemId: string | number,
+    type: "plus" | "minus"
+  ) => {
     setActiveButtons((prev) => ({
       ...prev,
       [itemId]: type,
@@ -111,14 +135,44 @@ export default function CartPage() {
   };
 
   const updateQuantity = async (itemId: number, newQuantity: number) => {
+    const token = localStorage.getItem("access");
+
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    if (!cart) return;
+
+    const previousCart = cart;
+    const targetItem = cart.items.find((item) => item.id === itemId);
+
+    if (!targetItem) return;
+
+    let optimisticItems: CartItem[];
+
+    if (newQuantity <= 0) {
+      optimisticItems = cart.items.filter((item) => item.id !== itemId);
+    } else {
+      optimisticItems = cart.items.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              quantity: newQuantity,
+              subtotal: String(Number(item.unit_price) * newQuantity),
+            }
+          : item
+      );
+    }
+
+    const optimisticCart = recalculateCart(optimisticItems);
+
+    if (optimisticCart) {
+      setCart(optimisticCart);
+      setCount(optimisticCart.total_quantity);
+    }
+
     try {
-      const token = localStorage.getItem("access");
-
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
       const res = await fetch(`${API_URL}/cart/item/${itemId}/`, {
         method: "PATCH",
         headers: {
@@ -146,25 +200,48 @@ export default function CartPage() {
       }
 
       if (!res.ok) {
-        throw new Error(data?.error || data?.detail || "Failed to update cart item.");
+        setCart(previousCart);
+        setCount(previousCart.total_quantity || 0);
+        throw new Error(
+          data?.error || data?.detail || "Failed to update cart item."
+        );
       }
 
-      await fetchCart();
+      if (data && Array.isArray(data.items)) {
+        setCart(data);
+        setCount(data.total_quantity || 0);
+      }
     } catch (error) {
       console.error("Error updating cart item:", error);
-      alert(error instanceof Error ? error.message : "Failed to update cart item.");
+      setCart(previousCart);
+      setCount(previousCart.total_quantity || 0);
+      alert(
+        error instanceof Error ? error.message : "Failed to update cart item."
+      );
     }
   };
 
   const removeItem = async (itemId: number) => {
+    const token = localStorage.getItem("access");
+
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    if (!cart) return;
+
+    const previousCart = cart;
+
+    const optimisticItems = cart.items.filter((item) => item.id !== itemId);
+    const optimisticCart = recalculateCart(optimisticItems);
+
+    if (optimisticCart) {
+      setCart(optimisticCart);
+      setCount(optimisticCart.total_quantity);
+    }
+
     try {
-      const token = localStorage.getItem("access");
-
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
       const res = await fetch(`${API_URL}/cart/item/${itemId}/delete/`, {
         method: "DELETE",
         headers: {
@@ -190,13 +267,24 @@ export default function CartPage() {
       }
 
       if (!res.ok) {
-        throw new Error(data?.error || data?.detail || "Failed to remove cart item.");
+        setCart(previousCart);
+        setCount(previousCart.total_quantity || 0);
+        throw new Error(
+          data?.error || data?.detail || "Failed to remove cart item."
+        );
       }
 
-      await fetchCart();
+      if (data && Array.isArray(data.items)) {
+        setCart(data);
+        setCount(data.total_quantity || 0);
+      }
     } catch (error) {
       console.error("Error removing cart item:", error);
-      alert(error instanceof Error ? error.message : "Failed to remove cart item.");
+      setCart(previousCart);
+      setCount(previousCart.total_quantity || 0);
+      alert(
+        error instanceof Error ? error.message : "Failed to remove cart item."
+      );
     }
   };
 
@@ -208,12 +296,13 @@ export default function CartPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#f7f7f5]">
+      <main className="min-h-screen flex flex-col bg-[#f7f7f5]">
         <Header />
-        <section className="container-shell py-32 text-center">
-          <p className="text-slate-500">Loading cart...</p>
+
+        <section className="flex-1 flex items-center justify-center">
+          <p className="text-slate-500 text-lg">Loading cart...</p>
         </section>
-        <Footer />
+
       </main>
     );
   }
@@ -274,7 +363,9 @@ export default function CartPage() {
 
                   <div className="flex flex-1 flex-col justify-between">
                     <div>
-                      <h3 className="font-bold text-slate-900">{item.product_name}</h3>
+                      <h3 className="font-bold text-slate-900">
+                        {item.product_name}
+                      </h3>
                       <p className="text-xs text-slate-400">{item.outlet_name}</p>
 
                       <p className="mt-1 font-bold text-slate-900">
@@ -288,12 +379,15 @@ export default function CartPage() {
 
                     <div className="mt-3 flex w-fit items-center rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
                       <button
-                        onClick={() => {
-                          handleButtonFlash(item.id, "minus");
-                          updateQuantity(item.id, item.quantity - 1);
-                        }}
+                          onClick={() => {
+                            if (item.quantity <= 1) return; // ✅ prevent delete
+                            handleButtonFlash(item.id, "minus");
+                            updateQuantity(item.id, item.quantity - 1);
+                          }}
                         className={`flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition-all duration-200 hover:bg-[#de922f] hover:text-white ${
-                          activeButton === "minus" ? "bg-[#de922f] text-white" : ""
+                          activeButton === "minus"
+                            ? "bg-[#de922f] text-white"
+                            : ""
                         }`}
                       >
                         <Minus className="h-4 w-4" />
@@ -309,7 +403,9 @@ export default function CartPage() {
                           updateQuantity(item.id, item.quantity + 1);
                         }}
                         className={`flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition-all duration-200 hover:bg-[#de922f] hover:text-white ${
-                          activeButton === "plus" ? "bg-[#de922f] text-white" : ""
+                          activeButton === "plus"
+                            ? "bg-[#de922f] text-white"
+                            : ""
                         }`}
                       >
                         <Plus className="h-4 w-4" />

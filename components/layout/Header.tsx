@@ -60,7 +60,7 @@ export default function Navbar() {
     const syncCartCount = async () => {
       const token = localStorage.getItem("access");
 
-      if (!token) {
+      if (!token || !API_URL) {
         setCount(0);
         return;
       }
@@ -88,12 +88,16 @@ export default function Navbar() {
 
         const data = await res.json();
 
-        const totalCount = Array.isArray(data.items)
-          ? data.items.reduce(
-              (sum: number, item: { quantity: number }) => sum + Number(item.quantity || 0),
-              0
-            )
-          : 0;
+        const totalCount =
+          typeof data.total_quantity === "number"
+            ? data.total_quantity
+            : Array.isArray(data.items)
+            ? data.items.reduce(
+                (sum: number, item: { quantity: number }) =>
+                  sum + Number(item.quantity || 0),
+                0
+              )
+            : 0;
 
         setCount(totalCount);
       } catch (error) {
@@ -106,14 +110,13 @@ export default function Navbar() {
 
     const handleStorageChange = () => {
       const user = localStorage.getItem("loggedInUser");
+
       if (user) {
         setLoggedInUser(JSON.parse(user));
       } else {
         setLoggedInUser(null);
         setCount(0);
       }
-
-      syncCartCount();
     };
 
     window.addEventListener("storage", handleStorageChange);
@@ -209,7 +212,6 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-[#1f5f56] bg-[#1f5f56] backdrop-blur">
       <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 md:flex-row md:items-center md:justify-between md:gap-4 md:py-4">
-        
         <div className="flex items-center justify-between gap-3">
           <Link href="/home" className="flex shrink-0 items-center gap-2">
             <img

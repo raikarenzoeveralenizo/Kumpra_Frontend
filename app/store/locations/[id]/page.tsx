@@ -15,7 +15,7 @@ export default async function LocationPage({
   searchParams: Promise<{ type?: string; org?: string }>;
 }) {
   const { id } = await params;
-  const { type } = await searchParams;
+  const { type, org } = await searchParams;
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const isBranch = type === "branch";
@@ -47,8 +47,12 @@ export default async function LocationPage({
         <section className="container-shell px-4 py-8 md:px-0">
           <div className="space-y-2 text-center">
             <p className="font-bold">Failed to load location</p>
-            <p className="text-sm text-slate-500">Location status: {locationRes.status}</p>
-            <p className="text-sm text-slate-500">Products status: {productsRes.status}</p>
+            <p className="text-sm text-slate-500">
+              Location status: {locationRes.status}
+            </p>
+            <p className="text-sm text-slate-500">
+              Products status: {productsRes.status}
+            </p>
           </div>
         </section>
         <Footer />
@@ -68,13 +72,15 @@ export default async function LocationPage({
         "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1000&auto=format&fit=crop",
       ];
 
+  const backHref = org ? `/store/${org}` : "/stores";
+
   return (
     <main className="min-h-screen bg-[#f7f7f5]">
       <Header />
 
       <section className="container-shell px-4 py-8 md:px-0">
         <Link
-          href="/stores"
+          href={backHref}
           className="mb-6 inline-flex text-sm font-medium text-slate-600 hover:text-slate-900"
         >
           ← Back
