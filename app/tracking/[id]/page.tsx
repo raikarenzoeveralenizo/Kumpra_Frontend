@@ -114,12 +114,13 @@ export default function TrackingPage({
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#f7f7f5]">
+      <main className="min-h-screen flex flex-col bg-[#f7f7f5]">
         <Header />
-        <section className="container-shell py-20 text-center text-slate-500">
-          Loading order tracking...
-        </section>
-        <Footer />
+
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-slate-500">Loading order tracking...</p>
+        </div>
+        
       </main>
     );
   }
