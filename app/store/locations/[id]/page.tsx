@@ -23,28 +23,16 @@ export default async function LocationPage({
   const locationUrl = `${API_URL}/${isBranch ? "branches" : "outlets"}/${id}/`;
   const productsUrl = `${API_URL}/products/?outlet=${id}`;
 
-  console.log("LOCATION URL:", locationUrl);
-  console.log("PRODUCTS URL:", productsUrl);
-
   const [locationRes, productsRes] = await Promise.all([
     fetch(locationUrl, { cache: "no-store" }),
     fetch(productsUrl, { cache: "no-store" }),
   ]);
 
-  console.log("LOCATION STATUS:", locationRes.status);
-  console.log("PRODUCTS STATUS:", productsRes.status);
-
   if (!locationRes.ok || !productsRes.ok) {
-    const locationText = await locationRes.text().catch(() => "");
-    const productsText = await productsRes.text().catch(() => "");
-
-    console.log("LOCATION ERROR BODY:", locationText);
-    console.log("PRODUCTS ERROR BODY:", productsText);
-
     return (
-      <main className="min-h-screen bg-[#f7f7f5]">
+      <main className="min-h-screen bg-[#f7f7f5] flex flex-col">
         <Header />
-        <section className="container-shell px-4 py-8 md:px-0">
+        <section className="container-shell flex-1 px-4 py-8 md:px-0">
           <div className="space-y-2 text-center">
             <p className="font-bold">Failed to load location</p>
             <p className="text-sm text-slate-500">
@@ -87,8 +75,10 @@ export default async function LocationPage({
         </Link>
 
         <div className="grid gap-6 md:gap-8 lg:grid-cols-2">
-          <div>
-            <StoreImageSlider images={galleryImages} alt={location.name} />
+          <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+            <div className="h-55 sm:h-65 md:h-75 lg:h-85 xl:h-90">
+              <StoreImageSlider images={galleryImages} alt={location.name} />
+            </div>
           </div>
 
           <div>
@@ -137,18 +127,18 @@ export default async function LocationPage({
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 overflow-hidden rounded-2xl">
               <StoreMap lat={lat} lng={lng} label={location.name} />
             </div>
           </div>
         </div>
 
-        <div className="mt-16">
-          <h2 className="border-b pb-4 text-xl font-bold text-slate-900 md:text-2xl">
+        <div className="mt-12 md:mt-16">
+          <h2 className="text-xl font-bold text-slate-900 md:text-2xl">
             Available Products
           </h2>
 
-          <div className="mt-6">
+          <div className="mt-8">
             <ProductGrid items={storeProducts} />
           </div>
         </div>

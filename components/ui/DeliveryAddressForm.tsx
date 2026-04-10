@@ -40,15 +40,23 @@ export default function DeliveryAddressForm({
   const [editingAddress, setEditingAddress] = useState<AddressItem | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const API_URL = "http://localhost:8000/api/addresses/";
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+  const API_URL = `${API_BASE_URL}/addresses/`;
 
   const getFreshToken = () =>
-  typeof window !== "undefined" ? localStorage.getItem("access") : null;
+    typeof window !== "undefined" ? localStorage.getItem("access") : null;
 
   useEffect(() => {
     const fetchAddresses = async () => {
       const token = getFreshToken();
+
       if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      if (!API_BASE_URL) {
+        console.error("NEXT_PUBLIC_API_URL is missing in .env.local");
         setLoading(false);
         return;
       }
@@ -62,25 +70,25 @@ export default function DeliveryAddressForm({
           const data = await res.json();
           setAddresses(data);
 
-          const defaultAddr = data.find((a: AddressItem) => a.is_default);
-
-          if (externalSelectedAddress) {
-            setSelectedId(externalSelectedAddress.id);
-            onSelectAddress?.(externalSelectedAddress);
-            onDeliveryFeeChange?.(50);
-          } else if (defaultAddr) {
-            setSelectedId(defaultAddr.id);
-            onSelectAddress?.(defaultAddr);
-            onDeliveryFeeChange?.(50);
-          } else if (data.length > 0) {
-            setSelectedId(data[0].id);
-            onSelectAddress?.(data[0]);
-            onDeliveryFeeChange?.(50);
-          } else {
+          if (data.length === 0) {
             setSelectedId(null);
-            onSelectAddress?.(null);
-            onDeliveryFeeChange?.(0);
+            return;
           }
+
+          if (externalSelectedAddress?.id) {
+            const matchedExternal = data.find(
+              (a: AddressItem) => a.id === externalSelectedAddress.id
+            );
+            if (matchedExternal) {
+              setSelectedId(matchedExternal.id);
+              return;
+            }
+          }
+
+          const defaultAddr = data.find((a: AddressItem) => a.is_default);
+          setSelectedId(defaultAddr ? defaultAddr.id : data[0].id);
+        } else {
+          console.error("Failed to fetch addresses");
         }
       } catch (err) {
         console.error("Fetch error:", err);
@@ -90,10 +98,33 @@ export default function DeliveryAddressForm({
     };
 
     fetchAddresses();
-  }, [externalSelectedAddress, onSelectAddress, onDeliveryFeeChange]);
+  }, []);
+
+  useEffect(() => {
+    if (!externalSelectedAddress?.id) return;
+    setSelectedId((prev) =>
+      prev === externalSelectedAddress.id ? prev : externalSelectedAddress.id
+    );
+  }, [externalSelectedAddress?.id]);
+
+  useEffect(() => {
+    const selected = addresses.find((a) => a.id === selectedId) || null;
+    onSelectAddress?.(selected);
+    onDeliveryFeeChange?.(selected ? 50 : 0);
+  }, [selectedId, addresses, onSelectAddress, onDeliveryFeeChange]);
 
   const handleAddressSubmit = async (formData: any) => {
     const token = getFreshToken();
+
+    if (!token) {
+      console.error("No access token found.");
+      return;
+    }
+
+    if (!API_BASE_URL) {
+      console.error("NEXT_PUBLIC_API_URL is missing in .env.local");
+      return;
+    }
 
     const payload = {
       full_name: formData.fullName,
@@ -115,7 +146,7 @@ export default function DeliveryAddressForm({
 
     try {
       const res = await fetch(url, {
-        method: method,
+        method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -131,19 +162,17 @@ export default function DeliveryAddressForm({
         const updatedList = await refreshRes.json();
         setAddresses(updatedList);
 
-        const updatedSelected =
-          editingAddress
-            ? updatedList.find((a: AddressItem) => a.id === editingAddress.id)
-            : updatedList.find((a: AddressItem) => a.is_default) || updatedList[updatedList.length - 1];
+        const updatedSelected = editingAddress
+          ? updatedList.find((a: AddressItem) => a.id === editingAddress.id)
+          : updatedList.find((a: AddressItem) => a.is_default) ||
+            updatedList[updatedList.length - 1];
 
-        if (updatedSelected) {
-          setSelectedId(updatedSelected.id);
-          onSelectAddress?.(updatedSelected);
-          onDeliveryFeeChange?.(50);
-        }
-
+        setSelectedId(updatedSelected ? updatedSelected.id : null);
         setIsModalOpen(false);
         setEditingAddress(null);
+      } else {
+        const errorData = await res.json().catch(() => null);
+        console.error("Save failed:", errorData || res.statusText);
       }
     } catch (err) {
       console.error("Save error:", err);
@@ -152,6 +181,17 @@ export default function DeliveryAddressForm({
 
   const handleDeleteAddress = async (id: number) => {
     const token = getFreshToken();
+
+    if (!token) {
+      console.error("No access token found.");
+      return;
+    }
+
+    if (!API_BASE_URL) {
+      console.error("NEXT_PUBLIC_API_URL is missing in .env.local");
+      return;
+    }
+
     if (!confirm("Are you sure?")) return;
 
     try {
@@ -165,19 +205,22 @@ export default function DeliveryAddressForm({
         setAddresses(updatedAddresses);
 
         if (selectedId === id) {
-          const nextSelected = updatedAddresses.find((a) => a.is_default) || updatedAddresses[0] || null;
+          const nextSelected =
+            updatedAddresses.find((a) => a.is_default) ||
+            updatedAddresses[0] ||
+            null;
 
           setSelectedId(nextSelected ? nextSelected.id : null);
-          onSelectAddress?.(nextSelected);
-          onDeliveryFeeChange?.(nextSelected ? 50 : 0);
         }
+      } else {
+        console.error("Delete failed");
       }
     } catch (err) {
       console.error("Delete error:", err);
     }
   };
 
-  const selectedAddress = addresses.find((a) => a.id === selectedId);
+  const selectedAddress = addresses.find((a) => a.id === selectedId) || null;
 
   const hasValidCoords =
     selectedAddress &&
@@ -221,11 +264,11 @@ export default function DeliveryAddressForm({
                 key={addr.id}
                 onClick={() => {
                   setSelectedId(addr.id);
-                  onSelectAddress?.(addr);
-                  onDeliveryFeeChange?.(50);
                 }}
                 className={`flex items-start gap-4 rounded-2xl border p-5 transition-all cursor-pointer ${
-                  selectedId === addr.id ? "border-[#3a9688] bg-[#f8faf9]" : "border-slate-200 bg-white"
+                  selectedId === addr.id
+                    ? "border-[#3a9688] bg-[#f8faf9]"
+                    : "border-slate-200 bg-white"
                 }`}
               >
                 <div className="flex-1">

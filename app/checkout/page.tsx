@@ -254,21 +254,20 @@ export default function CheckoutPage() {
 
   if (loadingCart) {
     return (
-      <main className="min-h-screen bg-[#f7f7f5]">
+      <main className="min-h-screen flex flex-col bg-[#f7f7f5]">
         <Header />
-        <section className="container-shell py-20 text-center text-slate-500">
-          Loading checkout...
+        <section className="flex-1 flex items-center justify-center">
+          <p className="text-lg text-slate-500">Loading checkout...</p>
         </section>
-        <Footer />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5]">
+    <main className="min-h-screen flex flex-col bg-[#f7f7f5]">
       <Header />
 
-      <section className="container-shell py-8">
+      <section className="flex-1 container-shell py-8">
         <h1 className="text-3xl font-serif font-bold tracking-tight text-brand-blue md:text-[32px]">
           Checkout
         </h1>
