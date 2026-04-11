@@ -220,8 +220,8 @@ export default function Navbar() {
               className="h-10 w-auto sm:h-12"
             />
 
-            <span className="text-white text-lg sm:text-xl font-semibold tracking-tight">
-              Kompra.ph
+            <span className="font-serif text-lg font-bold tracking-tight text-white sm:text-2xl">
+              Kompra<span className="text-[#b7e4d8]">.ph</span>
             </span>
           </Link>
 

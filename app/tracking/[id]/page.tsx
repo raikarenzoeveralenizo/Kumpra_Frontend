@@ -163,6 +163,17 @@ export default function TrackingPage({
     { label: "Picked Up", subtext: "Order completed" },
   ];
 
+
+  const getPaymentLabel = (method: string) => {
+    const m = method.toLowerCase();
+    if (m === "cash_on_delivery" || m === "pay_in_pickup" || m.includes("cash")) {
+      return isPickup ? "Pay in Pickup" : "Cash on Delivery";
+    }
+    if (m === "e-wallet") return "E-Wallet";
+    return method.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  };
+
+
   return (
     <main className="min-h-screen bg-[#f7f7f5]">
       <Header />
@@ -368,7 +379,7 @@ export default function TrackingPage({
 
                     <div className="flex items-center justify-between text-slate-600">
                       <span className="text-sm">Payment</span>
-                      <span className="text-sm font-medium">{order.paymentmethod}</span>
+                      <span className="text-sm font-medium">{getPaymentLabel(order.paymentmethod)}</span>
                     </div>
 
                     <div className="mt-3 border-t border-slate-200 pt-3">

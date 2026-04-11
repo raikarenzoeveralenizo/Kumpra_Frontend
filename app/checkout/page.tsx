@@ -208,35 +208,35 @@ export default function CheckoutPage() {
         body: JSON.stringify(payload),
       });
 
+      // --- CRITICAL CHANGE STARTS HERE ---
       const responseText = await res.text();
-      let data: CheckoutResponse | any = null;
+      let data: any = null;
 
       try {
         data = responseText ? JSON.parse(responseText) : null;
       } catch {
-        console.error("Non-JSON checkout response:", responseText);
-        throw new Error("Backend returned an invalid response. Check Django terminal.");
+        throw new Error("Invalid response from server.");
       }
-
-      console.log("CHECKOUT RESPONSE:", {
-        status: res.status,
-        ok: res.ok,
-        data,
-      });
 
       if (res.status === 401) {
         localStorage.removeItem("access");
-        localStorage.removeItem("refresh");
-        localStorage.removeItem("loggedInUser");
-        clearCart();
-        setCount(0);
         router.push("/login");
         return;
       }
 
       if (!res.ok) {
-        throw new Error(getErrorMessage(data));
+        const errorMessage = getErrorMessage(data);
+        alert(errorMessage);
+
+        // If stock was insufficient, refetch the cart so the UI updates
+        if (res.status === 400) {
+          // We can't call fetchCart directly because it's inside useEffect
+          // But we can trigger a window reload or a state update
+          window.location.reload(); 
+        }
+        return;
       }
+      // --- CRITICAL CHANGE ENDS HERE ---
 
       clearCart();
       setCount(0);
