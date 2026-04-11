@@ -1,16 +1,18 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import CartFlyAnimation from "@/components/ui/CartFlyAnimation";
-import { Poppins } from "next/font/google"; 
+// 1. Import Playfair_Display instead of Poppins
+import { Playfair_Display } from "next/font/google"; 
 
-const poppins = Poppins({
+// 2. Configure the new font
+const playfair = Playfair_Display({
   subsets: ["latin"],
-  weight: ["600"], // SemiBold
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Multi-Store Ecommerce",
-  description: "Shopee-like ecommerce starter built with Next.js",
+  title: "Kompra.ph | Multi-Store Ecommerce",
+  description: "Your premium neighborhood marketplace",
 };
 
 export default function RootLayout({
@@ -19,7 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={poppins.className}>
+    // 3. Apply the playfair class name here
+    <html lang="en" className={playfair.className}>
       <body>
         {children}
         <CartFlyAnimation />
