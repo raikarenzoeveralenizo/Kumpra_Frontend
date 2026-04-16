@@ -49,6 +49,101 @@ export default function ProfilePage() {
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
 
+  const [orders, setOrders] = useState<OrderItem[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      setLoadingOrders(true);
+
+      const token = localStorage.getItem("access");
+
+      // ✅ FIX 1: prevent infinite loading if no token
+      if (!token) {
+        console.warn("No token found");
+        setLoadingOrders(false);
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/orders/`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        // ✅ FIX 2: stop loading if request fails
+        if (!res.ok) {
+          console.error("Failed to fetch orders");
+          setLoadingOrders(false);
+          return;
+        }
+
+        const data = await res.json();
+
+        console.log("Orders API response:", data); // 🔍 DEBUG (you can remove later)
+
+        // 🔥 transform backend data → frontend format
+        const formattedOrders: OrderItem[] = data.map((order: any) => ({
+          id: order.transactionnumber,
+          date: new Date(order.createdat).toLocaleDateString("en-US", {
+            month: "long",
+            day: "2-digit",
+            year: "numeric",
+          }),
+          total: `₱${order.total.toLocaleString()}`,
+          status: mapStatus(order.status),
+          items: order.items.length,
+        }));
+
+        setOrders(formattedOrders);
+
+        const totalOrders = data.length;
+
+        const pendingOrders = data.filter((order: any) =>
+          ["pending", "confirmed", "preparing"].includes(
+            order.status?.toLowerCase()
+          )
+        ).length;
+
+        setStats({
+          orders: totalOrders,
+          wishlist: 0,
+          pending: pendingOrders,
+        });
+
+        setLoadingOrders(false);
+
+      } catch (err) {
+        console.error("Fetch orders error:", err);
+
+        // ✅ FIX 3: stop loading on error
+        setLoadingOrders(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+
+  const mapStatus = (status: string): "Delivered" | "Pending" | "Processing" => {
+  const s = status.toLowerCase();
+
+  if (["completed", "delivered", "received"].includes(s)) {
+    return "Delivered";
+  }
+
+  if (["pending"].includes(s)) {
+    return "Pending";
+  }
+
+  return "Processing";
+};
+
+
   const [profile, setProfile] = useState<ProfileData>({
     fullName: "",
     email: "",
@@ -68,29 +163,45 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("loggedInUser");
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("access");
 
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
+      if (!token) return;
 
-      const userProfile: ProfileData = {
-        fullName: user.fullName || "",
-        email: user.email || "",
-        phone: user.phone || "",
-        birthday: user.birthday || "",
-        gender: user.gender || "",
-        profileImage: user.profileImage || "",
-      };
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/update-profile/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      setProfile(userProfile);
-      setFormData(userProfile);
-    }
-  }, []);
+        if (!res.ok) {
+          console.error("Failed to fetch profile");
+          return;
+        }
 
-  useEffect(() => {
-    return () => {
-      stopCamera();
+        const data = await res.json();
+
+        const userProfile: ProfileData = {
+          fullName: data.full_name,
+          email: data.email,
+          phone: data.contact_number,
+          birthday: data.date_of_birth,
+          gender: data.gender,
+          profileImage: data.profile_image
+            ? `http://127.0.0.1:8000${data.profile_image}`
+            : "",
+        };
+
+        setProfile(userProfile);
+        setFormData(userProfile);
+
+      } catch (err) {
+        console.error(err);
+      }
     };
+
+    fetchProfile();
   }, []);
 
   const formatBirthday = (value: string) => {
@@ -121,38 +232,13 @@ export default function ProfilePage() {
     return value;
   };
 
-  const recentOrders: OrderItem[] = useMemo(
-    () => [
-      {
-        id: "ORD-1001",
-        date: "March 22, 2026",
-        total: "₱1,258",
-        status: "Delivered",
-        items: 2,
-      },
-      {
-        id: "ORD-1002",
-        date: "March 20, 2026",
-        total: "₱764",
-        status: "Pending",
-        items: 1,
-      },
-      {
-        id: "ORD-1003",
-        date: "March 18, 2026",
-        total: "₱2,022",
-        status: "Processing",
-        items: 4,
-      },
-    ],
-    []
-  );
+  const recentOrders = orders;
 
-  const stats = {
-    orders: 12,
-    wishlist: 8,
-    pending: 2,
-  };
+  const [stats, setStats] = useState({
+    orders: 0,
+    wishlist: 0,
+    pending: 0,
+  });
 
   const initials = profile.fullName
     ? profile.fullName
@@ -233,11 +319,52 @@ export default function ProfilePage() {
     reader.readAsDataURL(file);
   };
 
+  const uploadProfileImage = async (file: File) => {
+  const token = localStorage.getItem("access");
+
+  if (!token) {
+    console.error("No token found");
+    return;
+  }
+
+  const formData = new FormData();
+    formData.append("profile_image", file);
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/update-profile/`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("Upload failed:", data);
+        return;
+      }
+
+      // ✅ update UI with backend image
+      setProfile((prev) => ({
+        ...prev,
+        profileImage: data.profile_image
+          ? `http://127.0.0.1:8000${data.profile_image}`
+          : "",
+      }));
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleUploadImage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    handleReadImage(file);
+    handleReadImage(file); 
+    uploadProfileImage(file); 
     event.target.value = "";
   };
 
@@ -319,6 +446,8 @@ export default function ProfilePage() {
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     const imageBase64 = canvas.toDataURL("image/png");
+    const file = dataURLtoFile(imageBase64, "profile.png");
+    uploadProfileImage(file); // 🔥 send to backend
 
     setProfile((prev) => ({
       ...prev,
@@ -383,6 +512,22 @@ export default function ProfilePage() {
     },
   ];
 
+
+  const dataURLtoFile = (dataurl: string, filename: string) => {
+    const arr = dataurl.split(",");
+    const mime = arr[0].match(/:(.*?);/)![1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+
+    return new File([u8arr], filename, { type: mime });
+  };
+
+
   return (
     <main className="min-h-screen bg-[#f7f7f5]">
       <Header />
@@ -446,6 +591,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* --- STATS --- */}
             <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-center gap-4">
@@ -484,6 +630,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* --- TABS --- */}
             <div className="mt-6 inline-flex rounded-xl bg-slate-100 p-1">
               <button
                 type="button"
@@ -510,6 +657,7 @@ export default function ProfilePage() {
               </button>
             </div>
 
+            {/* --- CONTENT --- */}
             <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               {activeTab === "info" ? (
                 <div className="divide-y divide-slate-200">
@@ -537,46 +685,54 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {recentOrders.map((orderItem) => (
-                    <div
-                      key={orderItem.id}
-                      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 sm:px-5"
-                    >
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <ShoppingBag className="h-4 w-4 text-[#2f8f83]" />
-                            <p className="text-base font-semibold text-brand-blue">
-                              {orderItem.id}
-                            </p>
+                  {loadingOrders ? (
+                    <p className="text-sm text-slate-500">Loading orders...</p>
+                  ) : recentOrders.length === 0 ? (
+                    <p className="text-sm text-slate-500">No orders yet.</p>
+                  ) : (
+                    <>
+                      {recentOrders.map((orderItem) => (
+                        <div
+                          key={orderItem.id}
+                          className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 sm:px-5"
+                        >
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <ShoppingBag className="h-4 w-4 text-[#2f8f83]" />
+                                <p className="text-base font-semibold text-brand-blue">
+                                  {orderItem.id}
+                                </p>
+                              </div>
+                              <p className="mt-1 text-sm text-slate-500">{orderItem.date}</p>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+                              <span
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                  orderItem.status === "Delivered"
+                                    ? "bg-[#edf7f4] text-[#2f8f83]"
+                                    : orderItem.status === "Pending"
+                                    ? "bg-orange-50 text-orange-600"
+                                    : "bg-slate-100 text-slate-600"
+                                }`}
+                              >
+                                {orderItem.status}
+                              </span>
+
+                              <p className="text-sm text-slate-500">
+                                {orderItem.items} item{orderItem.items > 1 ? "s" : ""}
+                              </p>
+
+                              <p className="text-base font-bold text-brand-blue">
+                                {orderItem.total}
+                              </p>
+                            </div>
                           </div>
-                          <p className="mt-1 text-sm text-slate-500">{orderItem.date}</p>
                         </div>
-
-                        <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                              orderItem.status === "Delivered"
-                                ? "bg-[#edf7f4] text-[#2f8f83]"
-                                : orderItem.status === "Pending"
-                                ? "bg-orange-50 text-orange-600"
-                                : "bg-slate-100 text-slate-600"
-                            }`}
-                          >
-                            {orderItem.status}
-                          </span>
-
-                          <p className="text-sm text-slate-500">
-                            {orderItem.items} item{orderItem.items > 1 ? "s" : ""}
-                          </p>
-
-                          <p className="text-base font-bold text-brand-blue">
-                            {orderItem.total}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
             </div>

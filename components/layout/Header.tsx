@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/store/useCart";
 import { useAnimationStore } from "@/store/useAnimationStore";
 import { motion, AnimatePresence } from "framer-motion";
+import NotificationDropdown from "@/components/NotificationDropdown";
 
 type LoggedInUser = {
   fullName?: string;
@@ -327,6 +328,10 @@ export default function Navbar() {
               AI
             </Link>
 
+           <div className="flex items-center h-10">
+              <NotificationDropdown />
+            </div>
+
             <div className="relative">
               <motion.div
                 animate={isFlying ? { scale: [1, 1.2, 1] } : { scale: 1 }}
@@ -419,6 +424,10 @@ export default function Navbar() {
               <Sparkles className="h-4 w-4" />
               AI
             </Link>
+
+
+            <NotificationDropdown />
+
           </div>
         </div>
       </div>

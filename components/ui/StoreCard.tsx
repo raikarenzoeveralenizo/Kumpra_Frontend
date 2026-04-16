@@ -1,15 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin, Clock } from "lucide-react";
 import { motion } from "framer-motion";
-import type { ApiOutlet } from "@/types/api-outlet";
+import { MapPin, Store } from "lucide-react";
 
 export default function StoreCard({
   store,
   index = 0,
 }: {
-  store: ApiOutlet;
+  store: any; // Changed to any to accept our custom calculated fields
   index?: number;
 }) {
   return (
@@ -29,7 +28,7 @@ export default function StoreCard({
       >
         <div className="relative aspect-16/10 overflow-hidden bg-slate-100">
           <img
-            src="https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1000&auto=format&fit=crop"
+            src={store.image || "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1000&auto=format&fit=crop"}
             alt={store.name}
             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
@@ -40,19 +39,25 @@ export default function StoreCard({
             {store.name}
           </h3>
 
-          <div className="mt-4 space-y-2">
-            <div className="flex items-center gap-2 text-[13px] text-slate-400">
-              <MapPin className="h-4 w-4 shrink-0 text-slate-300" />
-              <span className="line-clamp-1">
-                {store.address || store.branch_address || "No address available"}
-              </span>
-            </div>
+          {/* Description added to match the image design */}
+          <p className="mt-2 text-sm leading-relaxed text-slate-500 line-clamp-2">
+            {store.description}
+          </p>
 
-            <div className="flex items-center gap-2 text-[13px] text-slate-400">
-              <Clock className="h-4 w-4 shrink-0 text-slate-300" />
-              <span>{store.phone || store.branch_phone || "Contact unavailable"}</span>
-            </div>
-          </div>
+          {/* Displaying Branch and Outlet Badges - Matched to Image Colors */}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+          {/* Branch Badge with Icon */}
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f5efe6] px-3 py-1 text-[11px] font-medium text-[#5f5646]">
+            <MapPin className="h-3.5 w-3.5" />
+            {store.branchCount || 0} Branches
+          </span>
+
+          {/* Outlet Badge with Icon */}
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f5efe6] px-3 py-1 text-[11px] font-medium text-[#5f5646]">
+            <Store className="h-3.5 w-3.5" />
+            {store.outletCount || 0} Outlets
+          </span>
+        </div>
         </div>
       </Link>
     </motion.div>

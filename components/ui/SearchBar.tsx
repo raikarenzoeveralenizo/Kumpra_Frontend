@@ -20,9 +20,9 @@ export default function SearchBar() {
   return (
     <div className="relative w-full">
       <Search
-        size={18}
+        size={20}
         onClick={handleSearch}
-        className="absolute left-3 top-1/2 -translate-y-1/2 cursor-pointer text-[#b7e4d8]/70 sm:left-4"
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 cursor-pointer text-white"
       />
 
       <input
@@ -41,8 +41,7 @@ export default function SearchBar() {
           border border-[#b7e4d8]/20
           bg-[#b7e4d8]/10 backdrop-blur
           py-2.5 sm:py-3
-          pl-10 sm:pl-11
-          pr-10 sm:pr-12
+          pl-12 pr-10   /* ✅ THIS is the important fix */
           text-[13px] sm:text-sm
           text-white placeholder-[#b7e4d8]/60
           outline-none

@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { ApiProduct } from "@/types/api-product";
 import { formatPrice } from "@/lib/utils";
@@ -113,32 +113,48 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
   return (
     <Link
       href={`/product/${productLinkId}`}
-      className="group block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+      className="group block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
     >
-      <div className="aspect-square overflow-hidden bg-[#f8fafc]">
+      {/* Image (responsive height) */}
+      <div className="h-36 sm:h-44 flex items-center justify-center bg-[#f8fafc] p-2">
         <img
           src={getImageUrl(product.image)}
           alt={product.name}
-          className="h-full w-full object-cover transition group-hover:scale-105"
+          className="max-h-full max-w-full object-contain transition group-hover:scale-105"
         />
       </div>
 
-      <div className="p-3.5">
-        <h3 className="text-[15px] font-semibold text-[#2f8f83]">
+      <div className="p-2 sm:p-2.5">
+        {/* Product Name */}
+        <h3 className="text-[13px] sm:text-sm font-semibold text-[#2f8f83] line-clamp-1">
           {product.name}
         </h3>
 
-        <p className="mt-1 text-xs text-slate-500">
+        {/* ⭐ Rating */}
+        <div className="mt-1 flex items-center gap-1">
+          <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-[#de922f] text-[#de922f]" />
+          <span className="text-[10px] sm:text-[11px] text-slate-600">4.9</span>
+          <span className="text-[10px] text-slate-400">(89)</span>
+        </div>
+
+        {/* Description */}
+        <p className="mt-1 text-[10px] sm:text-[11px] text-slate-500 line-clamp-1">
           {product.description || "No description"}
         </p>
 
-        <p className="mt-2 text-lg font-bold text-slate-900">
-          {formatPrice(product.price)}
-        </p>
+        {/* Bottom Row */}
+        <div className="mt-2 flex items-center justify-between" ref={buttonRef}>
+          {/* Left: Price + Stock */}
+          <div>
+            <p className="text-sm sm:text-base font-bold text-slate-900">
+              {formatPrice(product.price)}
+            </p>
+            <p className="text-[10px] sm:text-[11px] text-slate-400">
+              Stock: {product.quantity}
+            </p>
+          </div>
 
-        <p className="text-xs text-slate-400">Stock: {product.quantity}</p>
-
-        <div className="mt-3 flex justify-end" ref={buttonRef}>
+          {/* Cart Button (UNCHANGED) */}
           <motion.button
             type="button"
             whileTap={{ scale: 0.9 }}
