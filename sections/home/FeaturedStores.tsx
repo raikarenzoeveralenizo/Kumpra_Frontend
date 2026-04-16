@@ -6,6 +6,12 @@ import { ArrowRight } from "lucide-react";
 import StoreCard from "@/components/ui/StoreCard";
 import type { ApiOrganization } from "@/types/api-organization";
 
+const fallbackDescriptions: Record<string, string> = {
+  FreshMart: "FreshMart is a leading grocery organization committed to delivering fresh, organic, and locally-sourced...",
+  "Green Basket": "Green Basket focuses on sustainable, eco-friendly grocery shopping with zero-waste packaging and...",
+  "Metro Grocers": "Metro Grocers is a premium supermarket chain offering international and gourmet products alongside everyday...",
+};
+
 export default function FeaturedStores() {
   const [organizations, setOrganizations] = useState<ApiOrganization[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +25,6 @@ export default function FeaturedStores() {
         return res.json();
       })
       .then((data) => {
-        // We only want the top 3 for the "Featured" section
         setOrganizations(Array.isArray(data) ? data.slice(0, 3) : []);
       })
       .catch((err) => console.error("FEATURED_STORES_ERROR:", err))
@@ -41,17 +46,24 @@ export default function FeaturedStores() {
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {organizations.map((org) => {
-          // Convert Organization data to the format StoreCard expects
+        {organizations.map((org, index) => {
+          // Calculate counts for the badges
+          const branchCount = org.total_branches ?? org.branches?.length ?? 0;
+          const outletCount = org.total_outlets ?? org.branches?.reduce(
+            (total, branch) => total + (branch.outlets?.length || 0),
+            0
+          ) ?? 0;
+
           const storeData = {
             id: org.id,
             name: org.name,
-            // Fallback image if the org doesn't have a banner
+            description: fallbackDescriptions[org.name] || "Explore our wide range of fresh products and local branches.",
             image: "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=800&auto=format&fit=crop",
-            // You can add more mapping here if StoreCard needs rating, etc.
+            branchCount: branchCount,
+            outletCount: outletCount,
           };
 
-          return <StoreCard key={org.id} store={storeData as any} />;
+          return <StoreCard key={org.id} store={storeData as any} index={index} />;
         })}
       </div>
     </section>
