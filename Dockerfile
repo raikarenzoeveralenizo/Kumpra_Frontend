@@ -3,30 +3,24 @@ FROM node:20 AS build
 
 WORKDIR /app
 
-# Install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy project files
 COPY . .
-
-# Build the app
 RUN npm run build
 
 
 # ---------- PRODUCTION STAGE ----------
-FROM nginx:alpine
+FROM node:20 AS runner
 
-# Remove default nginx static files
-RUN rm -rf /usr/share/nginx/html/*
+WORKDIR /app
 
-# Copy nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+ENV NODE_ENV=production
 
-# Copy built app
-COPY --from=build /app/out /usr/share/nginx/html
+COPY --from=build /app/public ./public
+COPY --from=build /app/.next/standalone ./
+COPY --from=build /app/.next/static ./.next/static
 
-# Expose port
-EXPOSE 80
+EXPOSE 3000
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "server.js"]
