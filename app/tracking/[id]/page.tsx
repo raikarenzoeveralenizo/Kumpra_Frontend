@@ -51,8 +51,9 @@ type ApiOrder = {
   tracking: TrackingItem[];
   outlet_name: string | null;
   delivery_address: string | null;
-  order_type: "delivery" | "pickup";
+  order_type: "DELIVERY" | "PICKUP";
   current_step: number;
+  delivery_fee: number;
 };
 
 export default function TrackingPage({
@@ -153,9 +154,7 @@ export default function TrackingPage({
     normalizedOrderType === "pickup" ||
     (!normalizedOrderType && !order.delivery_address);
 
-  const deliveryFee = isPickup
-    ? 0
-    : Math.max(0, Number(order.total) - Number(order.subtotal));
+  const deliveryFee = isPickup ? 0 : Number(order.delivery_fee || 0);
 
   const pickupSteps = [
     { label: "Preparing Item", subtext: "In progress..." },
