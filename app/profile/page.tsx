@@ -19,6 +19,9 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 
+import RecentOrders from "@/components/profile/RecentOrders";
+
+
 type ProfileData = {
   fullName: string;
   email: string;
@@ -29,11 +32,17 @@ type ProfileData = {
 };
 
 type OrderItem = {
-  id: string;
+  id: number;
+  transactionnumber: string;
   date: string;
-  total: string;
-  status: "Delivered" | "Pending" | "Processing";
-  items: number;
+  total: number; // ✅ FIX (was string)
+  status: "Delivered" | "Pending" | "Processing" | "Cancelled";
+  items: any[];
+
+  // ✅ ADD THESE
+  subtotal: number;
+  delivery_fee: number;
+  order_type: "DELIVERY" | "PICKUP";
 };
 
 export default function ProfilePage() {
@@ -51,6 +60,13 @@ export default function ProfilePage() {
 
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
+
+  const [expandedOrder, setExpandedOrder] = useState<number | null>(null);
+
+  const [cancellingOrderId, setCancellingOrderId] = useState<number | null>(null);
+
+  const [cancelOrderId, setCancelOrderId] = useState<number | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -88,15 +104,22 @@ export default function ProfilePage() {
 
         // 🔥 transform backend data → frontend format
         const formattedOrders: OrderItem[] = data.map((order: any) => ({
-          id: order.transactionnumber,
+          id: order.id, // ✅ numeric (for cancel API)
+          transactionnumber: order.transactionnumber, // ✅ for display
+
           date: new Date(order.createdat).toLocaleDateString("en-US", {
             month: "long",
             day: "2-digit",
             year: "numeric",
           }),
-          total: `₱${order.total.toLocaleString()}`,
+
+          total: order.total,
           status: mapStatus(order.status),
-          items: order.items.length,
+          items: order.items,
+
+          subtotal: order.subtotal,
+          delivery_fee: order.delivery_fee,
+          order_type: order.order_type,
         }));
 
         setOrders(formattedOrders);
@@ -129,19 +152,25 @@ export default function ProfilePage() {
   }, []);
 
 
-  const mapStatus = (status: string): "Delivered" | "Pending" | "Processing" => {
-  const s = status.toLowerCase();
+  const mapStatus = (
+    status: string
+  ): "Delivered" | "Pending" | "Processing" | "Cancelled" => {
+    const s = status.toLowerCase();
 
-  if (["completed", "delivered", "received"].includes(s)) {
-    return "Delivered";
-  }
+    if (["completed", "delivered", "received"].includes(s)) {
+      return "Delivered";
+    }
 
-  if (["pending"].includes(s)) {
-    return "Pending";
-  }
+    if (s === "pending") {
+      return "Pending";
+    }
 
-  return "Processing";
-};
+    if (s === "cancelled") {
+      return "Cancelled"; 
+    }
+
+    return "Processing";
+  };
 
 
   const [profile, setProfile] = useState<ProfileData>({
@@ -262,6 +291,62 @@ export default function ProfilePage() {
       })
     );
   };
+
+
+  const handleCancelOrder = (orderId: number) => {
+    setCancelOrderId(orderId);
+    setShowCancelModal(true);
+  };
+
+
+  const confirmCancelOrder = async () => {
+    if (!cancelOrderId) return;
+
+    const token = localStorage.getItem("access");
+
+    if (!token) {
+      alert("You are not logged in.");
+      return;
+    }
+
+    try {
+      setCancellingOrderId(cancelOrderId);
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/orders/${cancelOrderId}/cancel/`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to cancel order.");
+        return;
+      }
+
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.id === cancelOrderId
+            ? { ...order, status: "Cancelled" }
+            : order
+        )
+      );
+
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong.");
+    } finally {
+      setCancellingOrderId(null);
+      setShowCancelModal(false);
+      setCancelOrderId(null);
+    }
+  };
+
 
   const handleOpenEdit = () => {
     setFormData(profile);
@@ -684,61 +769,19 @@ export default function ProfilePage() {
                   })}
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {loadingOrders ? (
-                    <p className="text-sm text-slate-500">Loading orders...</p>
-                  ) : recentOrders.length === 0 ? (
-                    <p className="text-sm text-slate-500">No orders yet.</p>
-                  ) : (
-                    <>
-                      {recentOrders.map((orderItem) => (
-                        <div
-                          key={orderItem.id}
-                          className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 sm:px-5"
-                        >
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <ShoppingBag className="h-4 w-4 text-[#2f8f83]" />
-                                <p className="text-base font-semibold text-brand-blue">
-                                  {orderItem.id}
-                                </p>
-                              </div>
-                              <p className="mt-1 text-sm text-slate-500">{orderItem.date}</p>
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-                              <span
-                                className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                  orderItem.status === "Delivered"
-                                    ? "bg-[#edf7f4] text-[#2f8f83]"
-                                    : orderItem.status === "Pending"
-                                    ? "bg-orange-50 text-orange-600"
-                                    : "bg-slate-100 text-slate-600"
-                                }`}
-                              >
-                                {orderItem.status}
-                              </span>
-
-                              <p className="text-sm text-slate-500">
-                                {orderItem.items} item{orderItem.items > 1 ? "s" : ""}
-                              </p>
-
-                              <p className="text-base font-bold text-brand-blue">
-                                {orderItem.total}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </>
-                  )}
-                </div>
+                <RecentOrders
+                  orders={recentOrders}
+                  loading={loadingOrders}
+                  expandedOrder={expandedOrder}
+                  setExpandedOrder={setExpandedOrder}
+                  onCancelOrder={handleCancelOrder}
+                  cancellingOrderId={cancellingOrderId} 
+                />
               )}
             </div>
-          </div>
-        </div>
-      </section>
+            </div>
+            </div>
+            </section>
 
       {isEditOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6">
@@ -948,6 +991,45 @@ export default function ProfilePage() {
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+
+            <h2 className="text-lg font-bold text-red-600">
+              ⚠️ Cancel Order
+            </h2>
+
+            <p className="mt-2 text-sm text-slate-600">
+              Are you sure you want to cancel this order? This action cannot be undone.
+            </p>
+
+            <div className="mt-6 flex justify-end gap-3">
+              {/* NO BUTTON */}
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm transition-all duration-200 hover:bg-[#d98b2b] hover:text-white group"
+              >
+                Keep Order
+              </button>
+
+              {/* YES BUTTON */}
+              <button
+                onClick={confirmCancelOrder}
+                disabled={cancellingOrderId !== null}
+                className={`rounded-xl px-4 py-2 text-sm text-white ${
+                  cancellingOrderId
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-red-500 hover:bg-red-600"
+                }`}
+              >
+                {cancellingOrderId ? "Cancelling..." : "Yes, Cancel"}
+              </button>
+            </div>
+
           </div>
         </div>
       )}

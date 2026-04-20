@@ -96,6 +96,8 @@ export default function ProductsPage() {
         const data: ApiProduct[] = await res.json();
         const productList = Array.isArray(data) ? data : [];
 
+        console.log("PRODUCTS DEBUG:", productList); 
+
         setProducts(productList);
 
         const highestPrice =
