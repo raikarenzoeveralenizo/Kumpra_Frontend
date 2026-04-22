@@ -26,10 +26,17 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
   const productId = product.inventory_item_id;
   const productLinkId = product.inventory_item_id;
 
+  const SUPABASE_BASE_URL =
+    "https://khdoeyvmsvszpmmcwzrt.supabase.co/storage/v1/object/public/media";
+
   const getImageUrl = (image: string | null) => {
     if (!image) return "/img/placeholder.jpg";
+
+    // Already full URL
     if (image.startsWith("http")) return image;
-    return `${API_BASE_URL}${image.startsWith("/") ? image : `/${image}`}`;
+
+    // Build Supabase URL from path
+    return `${SUPABASE_BASE_URL}/${image}`;
   };
 
   const handleAddToCart = async (e: React.MouseEvent) => {
@@ -121,6 +128,10 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
           src={getImageUrl(product.image)}
           alt={product.name}
           className="max-h-full max-w-full object-contain transition group-hover:scale-105"
+          loading="lazy"
+          onError={(e) => {
+            e.currentTarget.src = "/img/placeholder.jpg";
+          }}
         />
       </div>
 
