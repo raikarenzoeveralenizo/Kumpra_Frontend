@@ -47,8 +47,7 @@ export default function SearchBar() {
           outline-none
           transition-all duration-200
           focus:border-[#b7e4d8]
-          focus:ring-2 focus:ring-[#b7e4d8]/30
-          focus:bg-[#b7e4d8]/15
+          focus:outline-none focus:ring-2 focus:ring-[#2f8f83]/30
         "
       />
     </div>
