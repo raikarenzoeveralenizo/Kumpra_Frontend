@@ -1,35 +1,43 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 
-// safely load the map logic only on the client side
-const MapView = dynamic(() => import("@/components/ui/Map"), { 
-  ssr: false,
-  loading: () => (
-    <div className="flex flex-col items-center justify-center h-full space-y-2 text-slate-400">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-500" />
-      <p className="text-sm font-medium">Loading Map...</p>
-    </div>
-  )
+import L from "leaflet";
+import { useEffect } from "react";
+
+// 1. Fix the missing marker icon bug in Next.js
+const icon = L.icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
 });
 
-interface StoreMapProps {
-  lat: number;
-  lng: number;
-  label: string;
+// 2. The "Watcher" component to update view when lat/lng props change
+function ChangeView({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, 16); // Zoom level 16 for store detail
+  }, [center, map]);
+  return null;
 }
 
-export default function StoreMap({ lat, lng, label }: StoreMapProps) {
-  return (
-    <div className="relative mt-6 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/50 p-1 shadow-sm transition-all hover:shadow-md">
-      {/* Map Header Info (Optional - matches the Lat/Lng text in your image) */}
-      <div className="absolute bottom-4 left-1/2 z-1000 -translate-x-1/2 rounded-full bg-white/90 px-4 py-1.5 text-[10px] font-medium text-slate-500 shadow-sm backdrop-blur-sm border border-slate-100">
-        Lat: {lat.toFixed(4)}, Lng: {lng.toFixed(4)}
-      </div>
+export default function Map({ lat, lng, label }: { lat: number, lng: number, label: string }) {
+  const coords: [number, number] = [lat, lng];
 
-      <div className="h-64 w-full rounded-xl overflow-hidden">
-        <MapView lat={lat} lng={lng} label={label} />
-      </div>
-    </div>
+  return (
+    <MapContainer 
+      center={coords} 
+      zoom={16} 
+      scrollWheelZoom={false} 
+      className="h-full w-full"
+    >
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      <Marker position={coords} icon={icon} />
+      <ChangeView center={coords} />
+    </MapContainer>
   );
 }

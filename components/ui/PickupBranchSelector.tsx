@@ -1,8 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { MapPin, Clock, Calendar } from "lucide-react";
 import type { ApiOutlet } from "@/types/api-outlet";
+
+// Safely load the Map component only on the client side to avoid SSR errors
+const StoreMap = dynamic(() => import("@/components/ui/Map"), { 
+  ssr: false,
+  loading: () => (
+    <div className="flex flex-col items-center justify-center h-56 w-full space-y-2 text-slate-400 bg-slate-50/50 rounded-2xl border border-slate-100">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-[#3a9688]" />
+      <p className="text-sm font-medium">Loading Map...</p>
+    </div>
+  )
+});
 
 interface PickupBranchSelectorProps {
   onSelect: (store: ApiOutlet) => void;
@@ -39,6 +51,7 @@ export default function PickupBranchSelector({
 
   return (
     <div className="space-y-6">
+      {/* 1. Branch Selection List */}
       {!selectedStore && (
         <>
           <h3 className="text-xl font-serif font-bold text-brand-blue">
@@ -82,14 +95,39 @@ export default function PickupBranchSelector({
         </>
       )}
 
-      <div className="relative flex h-56 flex-col items-center justify-center rounded-2xl border border-slate-100 bg-slate-50/50 p-6 text-center">
-        <MapPin className="mb-3 h-8 w-8 text-[#3a9688] opacity-40" />
-        <p className="font-serif text-sm font-bold text-slate-400">
-          Map for {selectedStore ? selectedStore.name : "pickup location"}
-        </p>
-        <p className="text-xs text-slate-400">Full map integration coming soon</p>
+      {/* 2. Interactive Map Section */}
+      <div className="w-full">
+        {selectedStore && selectedStore.latitude && selectedStore.longitude ? (
+          <div className="relative mt-2 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/50 p-1 shadow-sm transition-all hover:shadow-md">
+            {/* Coordinate Badge Overlay */}
+            <div className="absolute bottom-4 left-1/2 z-[1000] -translate-x-1/2 rounded-full bg-white/90 px-4 py-1.5 text-[10px] font-medium text-slate-500 shadow-sm backdrop-blur-sm border border-slate-100">
+              Lat: {parseFloat(selectedStore.latitude).toFixed(4)}, Lng: {parseFloat(selectedStore.longitude).toFixed(4)}
+            </div>
+
+            <div className="h-64 w-full rounded-xl overflow-hidden">
+              <StoreMap 
+                lat={parseFloat(selectedStore.latitude)} 
+                lng={parseFloat(selectedStore.longitude)} 
+                label={selectedStore.name} 
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="relative flex h-56 flex-col items-center justify-center rounded-2xl border border-slate-100 bg-slate-50/50 p-6 text-center">
+            <MapPin className="mb-3 h-8 w-8 text-[#3a9688] opacity-40" />
+            <p className="font-serif text-sm font-bold text-slate-400">
+              {selectedStore 
+                ? `Coordinates unavailable for ${selectedStore.name}` 
+                : "Select a pickup store to view map"}
+            </p>
+            <p className="mt-1 text-[10px] text-slate-400 uppercase tracking-widest">
+              Live location tracking
+            </p>
+          </div>
+        )}
       </div>
 
+      {/* 3. Pickup Scheduling Section */}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -98,7 +136,7 @@ export default function PickupBranchSelector({
           <input
             type="date"
             defaultValue={new Date().toISOString().split("T")[0]}
-            className="w-full rounded-xl border border-slate-100 bg-white px-4 py-3 text-sm shadow-sm focus:border-[#3a9688] focus:outline-none"
+            className="w-full rounded-xl border border-slate-100 bg-white px-4 py-3 text-sm shadow-sm focus:border-[#3a9688] focus:outline-none transition-colors"
           />
         </div>
 
@@ -108,7 +146,7 @@ export default function PickupBranchSelector({
           </label>
           <input
             type="time"
-            className="w-full rounded-xl border border-slate-100 bg-white px-4 py-3 text-sm shadow-sm focus:border-[#3a9688] focus:outline-none"
+            className="w-full rounded-xl border border-slate-100 bg-white px-4 py-3 text-sm shadow-sm focus:border-[#3a9688] focus:outline-none transition-colors"
           />
         </div>
       </div>
