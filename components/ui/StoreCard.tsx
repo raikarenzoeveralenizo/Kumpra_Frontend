@@ -7,9 +7,11 @@ import { MapPin, Store } from "lucide-react";
 export default function StoreCard({
   store,
   index = 0,
+  variant = "default", // ✅ ADD THIS
 }: {
-  store: any; // Changed to any to accept our custom calculated fields
+  store: any;
   index?: number;
+  variant?: "default" | "location"; // ✅ ADD THIS
 }) {
   return (
     <motion.div
@@ -23,7 +25,7 @@ export default function StoreCard({
       }}
     >
       <Link
-        href={`/store/${store.id}`}
+        href={`/store/locations/${store.id}?type=${store.type}&org=${store.orgId}`}
         className="group block overflow-hidden rounded-xl border border-slate-100 bg-white transition-all hover:border-[#3a9688]/30 hover:shadow-lg"
       >
         <div className="relative aspect-16/10 overflow-hidden bg-slate-100">
@@ -45,19 +47,23 @@ export default function StoreCard({
           </p>
 
           {/* Displaying Branch and Outlet Badges - Matched to Image Colors */}
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-          {/* Branch Badge with Icon */}
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f5efe6] px-3 py-1 text-[11px] font-medium text-[#5f5646]">
-            <MapPin className="h-3.5 w-3.5" />
-            {store.branchCount || 0} Branches
-          </span>
+          <div className="mt-4">
+            {variant === "location" ? (
+              <p className="text-sm text-slate-500">
+                📍 {store.description || "No address available"}
+              </p>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f5efe6] px-3 py-1 text-[11px] font-medium text-[#5f5646]">
+                  {store.branchCount || 0} Branches
+                </span>
 
-          {/* Outlet Badge with Icon */}
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f5efe6] px-3 py-1 text-[11px] font-medium text-[#5f5646]">
-            <Store className="h-3.5 w-3.5" />
-            {store.outletCount || 0} Outlets
-          </span>
-        </div>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f5efe6] px-3 py-1 text-[11px] font-medium text-[#5f5646]">
+                  {store.outletCount || 0} Outlets
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </Link>
     </motion.div>

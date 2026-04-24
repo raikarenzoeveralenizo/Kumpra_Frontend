@@ -41,6 +41,8 @@ export default function OrganizationPage({
   const [following, setFollowing] = useState(false);
   const [language, setLanguage] = useState("EN");
 
+  const [selectedCategory, setSelectedCategory] = useState("");
+
   useEffect(() => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -79,11 +81,24 @@ export default function OrganizationPage({
   }, [allProducts, outletIds]);
 
   const filteredProducts = useMemo(() => {
-    if (!search) return organizationProducts;
-    return organizationProducts.filter((p) =>
-      p.name.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [organizationProducts, search]);
+    let result = organizationProducts;
+
+    // ✅ Filter by category
+    if (selectedCategory) {
+      result = result.filter(
+        (p: any) => p.category_name === selectedCategory
+      );
+    }
+
+    // ✅ Filter by search
+    if (search) {
+      result = result.filter((p: any) =>
+        p.name.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    return result;
+  }, [organizationProducts, search, selectedCategory]);
 
   const storesForCard = useMemo(() => {
     if (!organization?.branches) return [];
@@ -91,27 +106,31 @@ export default function OrganizationPage({
     const result: any[] = [];
 
     organization.branches.forEach((branch: any) => {
-      // ✅ Add branch
+      // ✅ BRANCH
       result.push({
-        id: `branch-${branch.id}`,
+        id: branch.id,
         name: branch.name,
-        description: branch.address,
+        description: branch.address, // ✅ USE ADDRESS HERE
         image:
           branch.image ||
           "https://images.unsplash.com/photo-1542838132-92c53300491e",
         type: "branch",
+        orgId: organization.id, // ✅ IMPORTANT for routing
       });
 
-      // ✅ Add ALL outlets under that branch
+      // ✅ OUTLETS
       branch.outlets?.forEach((outlet: any) => {
         result.push({
-          id: `outlet-${outlet.id}`,
+          id: outlet.id,
           name: outlet.name,
-          description: outlet.address,
+          description:
+            outlet.address || outlet.branch_address, // ✅ USE OUTLET ADDRESS
           image:
+            outlet.bannerimage ||
             branch.image ||
             "https://images.unsplash.com/photo-1542838132-92c53300491e",
           type: "outlet",
+          orgId: organization.id, // ✅ IMPORTANT
         });
       });
     });
@@ -206,6 +225,8 @@ export default function OrganizationPage({
                   products={organizationProducts}
                   setSearch={setSearch}
                   setActiveTab={setActiveTab}
+                  selectedCategory={selectedCategory}
+                  setSelectedCategory={setSelectedCategory}
                 />
 
                 <CompanyProfile

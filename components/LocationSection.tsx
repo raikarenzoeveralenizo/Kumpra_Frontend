@@ -34,7 +34,12 @@ export default function LocationSection({ stores }: any) {
 
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {branches.map((store: any, index: number) => (
-                  <StoreCard key={store.id} store={store} index={index} />
+                  <StoreCard
+                    key={store.id}
+                    store={store}
+                    index={index}
+                    variant="location"
+                  />
                 ))}
               </div>
             </div>
@@ -56,7 +61,12 @@ export default function LocationSection({ stores }: any) {
 
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {outlets.map((store: any, index: number) => (
-                  <StoreCard key={store.id} store={store} index={index} />
+                  <StoreCard
+                    key={store.id}
+                    store={store}
+                    index={index}
+                    variant="location" // ✅ ADD THIS
+                  />
                 ))}
               </div>
             </div>
