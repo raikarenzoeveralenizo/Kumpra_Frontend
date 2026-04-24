@@ -6,4 +6,7 @@ export type ApiOutlet = {
   branch_name: string | null;
   branch_address: string | null;
   branch_phone: string | null;
+  // Add these two lines:
+  latitude: string;
+  longitude: string;
 };
