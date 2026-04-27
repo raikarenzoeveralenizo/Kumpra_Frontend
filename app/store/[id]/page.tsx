@@ -29,6 +29,9 @@ export default function OrganizationPage({
 }) {
   const { id } = use(params);
 
+  // ✅ extract numeric ID
+  const realId = id.split("-")[0];
+
   const [organization, setOrganization] =
     useState<ApiOrganization | null>(null);
   const [allProducts, setAllProducts] = useState<ApiProduct[]>([]);
@@ -49,7 +52,7 @@ export default function OrganizationPage({
     const loadData = async () => {
       try {
         const [orgRes, prodRes] = await Promise.all([
-          fetch(`${API_URL}/organizations/${id}/`),
+          fetch(`${API_URL}/organizations/${realId}/`),
           fetch(`${API_URL}/products/`),
         ]);
 
