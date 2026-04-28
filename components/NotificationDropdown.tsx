@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Bell,
   Check,
@@ -23,56 +23,38 @@ type Notification = {
   id: number;
   title: string;
   message: string;
-  time: string;
-  icon: "order" | "sale" | "review" | "stock";
+  createdat: string;
+  type: string;
+  isread: boolean;
 };
 
 export default function NotificationDropdown() {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: 1,
-      title: "Order Shipped",
-      message: "Your order #1234 has been shipped and is on its way.",
-      time: "5 min ago",
-      icon: "order",
-    },
-    {
-      id: 2,
-      title: "Flash Sale! 30% Off",
-      message:
-        "Don't miss our flash sale on electronics — ends tonight!",
-      time: "15 min ago",
-      icon: "sale",
-    },
-    {
-      id: 3,
-      title: "Review Response",
-      message:
-        "TechStore replied to your review on Wireless Earbuds.",
-      time: "1 hour ago",
-      icon: "review",
-    },
-    {
-      id: 4,
-      title: "Back in Stock",
-      message:
-        "Premium Bluetooth Speaker is back in stock — grab it now!",
-      time: "2 hours ago",
-      icon: "stock",
-    },
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  const unreadCount = notifications.length;
+  // ✅ FETCH FROM BACKEND
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/notifications/?orgId=1")
+      .then((res) => res.json())
+      .then((data) => setNotifications(data))
+      .catch((err) => console.error("Error fetching notifications:", err));
+  }, []);
+
+  // ✅ FIXED: unread count
+  const unreadCount = notifications.filter((n) => !n.isread).length;
 
   const removeNotification = (id: number) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
+  // ✅ OPTIONAL: mark all as read (frontend only for now)
   const markAllRead = () => {
-    // optional logic
+    setNotifications((prev) =>
+      prev.map((n) => ({ ...n, isread: true }))
+    );
   };
 
-  const getIcon = (type: Notification["icon"]) => {
+  // ✅ FIXED: use backend "type"
+  const getIcon = (type: string) => {
     switch (type) {
       case "order":
         return {
@@ -93,6 +75,11 @@ export default function NotificationDropdown() {
         return {
           icon: <AlertTriangle className="text-red-600" size={16} />,
           bg: "bg-red-100",
+        };
+      default:
+        return {
+          icon: <Bell size={16} />,
+          bg: "bg-gray-100",
         };
     }
   };
@@ -135,8 +122,14 @@ export default function NotificationDropdown() {
         {/* List */}
         <ScrollArea className="max-h-105">
           <div className="px-3 py-2">
+            {notifications.length === 0 && (
+              <p className="text-center text-sm text-gray-400 py-6">
+                No notifications yet
+              </p>
+            )}
+
             {notifications.map((n) => {
-              const config = getIcon(n.icon);
+              const config = getIcon(n.type);
 
               return (
                 <div
@@ -170,10 +163,15 @@ export default function NotificationDropdown() {
                     </p>
 
                     <div className="flex items-center gap-2 mt-2">
+                      {/* ✅ FIXED TIME */}
                       <span className="text-xs text-gray-400">
-                        {n.time}
+                        {new Date(n.createdat).toLocaleString()}
                       </span>
-                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+
+                      {/* unread indicator */}
+                      {!n.isread && (
+                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                      )}
                     </div>
                   </div>
                 </div>

@@ -29,6 +29,9 @@ export default function OrganizationPage({
 }) {
   const { id } = use(params);
 
+  // ✅ extract numeric ID
+  const realId = id.split("-")[0];
+
   const [organization, setOrganization] =
     useState<ApiOrganization | null>(null);
   const [allProducts, setAllProducts] = useState<ApiProduct[]>([]);
@@ -43,19 +46,30 @@ export default function OrganizationPage({
 
   const [selectedCategory, setSelectedCategory] = useState("");
 
+  const [orgCategories, setOrgCategories] = useState<any[]>([]);
+
   useEffect(() => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
     const loadData = async () => {
       try {
-        const [orgRes, prodRes] = await Promise.all([
-          fetch(`${API_URL}/organizations/${id}/`),
+        const [orgRes, prodRes, catRes] = await Promise.all([
+          fetch(`${API_URL}/organizations/${realId}/`),
           fetch(`${API_URL}/products/`),
+          fetch(`${API_URL}/org-item-categories/${realId}/`),
         ]);
 
+        // ✅ ONLY ONCE
         const orgData = await orgRes.json();
         const prodData = await prodRes.json();
+        const catData = await catRes.json();
 
+        // ✅ SET STATE
+        setOrganization(orgData);
+        setAllProducts(Array.isArray(prodData) ? prodData : []);
+        setOrgCategories(Array.isArray(catData) ? catData : []);
+
+        
         setOrganization(orgData);
         setAllProducts(Array.isArray(prodData) ? prodData : []);
       } catch {
@@ -139,14 +153,8 @@ export default function OrganizationPage({
   }, [organization]);
 
   const categories = useMemo(() => {
-    return [
-      ...new Set(
-        organizationProducts.map(
-          (p: any) => p.category_name || "General"
-        )
-      ),
-    ];
-  }, [organizationProducts]);
+    return orgCategories;
+  }, [orgCategories]);
 
   if (loading) {
     return (
