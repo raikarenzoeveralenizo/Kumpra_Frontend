@@ -18,25 +18,19 @@ export default function StoreHeader({
   following: boolean;
   setFollowing: (val: boolean) => void;
 }) {
-  const email = `contact@${organization.name
-    .toLowerCase()
-    .replace(/\s+/g, "")}.ph`;
-
-  const phone = "+63 900 000 0000";
-
   return (
     <div className="bg-white border-b border-gray-200">
       <div className="container-shell py-4 flex items-center gap-4">
 
         {/* BACK */}
         <Link href="/stores" className="text-gray-400 hover:text-gray-700 transition">
-            ←
-            </Link>
+          ←
+        </Link>
 
         {/* LOGO */}
         <div className="h-14 w-14 rounded-lg overflow-hidden border bg-gray-100 shrink-0">
           <img
-            src={organization.logo}
+            src={organization.profilephoto || "https://via.placeholder.com/150"}
             className="w-full h-full object-cover"
           />
         </div>
@@ -55,15 +49,19 @@ export default function StoreHeader({
           </div>
 
           <div className="flex items-center gap-3 text-xs text-gray-400 mt-1 flex-wrap">
+            
+            {/* PHONE */}
             <span className="flex items-center gap-1">
               <Phone className="h-3 w-3" />
-              {phone}
+              {organization.contactnumber || "No contact number"}
             </span>
 
+            {/* EMAIL */}
             <span className="hidden md:flex items-center gap-1">
               <Mail className="h-3 w-3" />
-              {email}
+              {organization.email || "No email available"}
             </span>
+
           </div>
         </div>
 
@@ -72,10 +70,10 @@ export default function StoreHeader({
           <button
             onClick={() => setFollowing(!following)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition ${
-                following
-                    ? "bg-gray-100 text-gray-700"
-                    : "bg-[#2f8f83] text-white hover:opacity-90"
-                }`}
+              following
+                ? "bg-gray-100 text-gray-700"
+                : "bg-[#2f8f83] text-white hover:opacity-90"
+            }`}
           >
             <Heart className={`h-4 w-4 ${following ? "fill-current" : ""}`} />
             {following ? "Following" : "Follow"}

@@ -25,7 +25,7 @@ export default function CheckoutSummary({
     return sum + item.price * item.cartQuantity;
   }, 0);
 
-  const total = subtotal + deliveryFee;
+  const total = subtotal;
 
   return (
     <div className="card rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
@@ -80,10 +80,9 @@ export default function CheckoutSummary({
         </div>
 
         {mode === "delivery" && (
-          <div className="flex items-center justify-between text-sm text-slate-500">
-            <span>Delivery Fee</span>
-            <span>{formatPrice(deliveryFee)}</span>
-          </div>
+          <p className="text-xs text-slate-400">
+            Delivery fee will be paid separately upon delivery.
+          </p>
         )}
 
         <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-lg font-bold text-brand-blue">

@@ -8,10 +8,12 @@ import DeliveryAddressForm from "@/components/ui/DeliveryAddressForm";
 import PickupBranchSelector from "@/components/ui/PickupBranchSelector";
 import CheckoutSummary from "@/sections/checkout/CheckoutSummary";
 import { motion, AnimatePresence } from "framer-motion";
-import { Truck, Store, X, MapPin } from "lucide-react";
+import { Truck, Store, X, MapPin, Bike } from "lucide-react";
 import { useCart } from "@/store/useCart";
 import PaymentMethod from "@/components/checkout/PaymentMethod";
 import type { ApiOutlet } from "@/types/api-outlet";
+import { Checkbox } from "@/components/ui/Checkbox";
+
 
 type AddressItem = {
   id: number;
@@ -92,6 +94,24 @@ export default function CheckoutPage() {
     cartQuantity: item.quantity,
   }));
 
+  const [preferredRiders, setPreferredRiders] = useState<string[]>([]);
+
+  const [couriers, setCouriers] = useState<any[]>([]);
+  const [selectedCourierIds, setSelectedCourierIds] = useState<number[]>([]);
+
+
+  const handleCourierToggle = (courierId: number) => {
+    setSelectedCourierIds((prev) => {
+      if (prev.includes(courierId)) {
+        return prev.filter((id) => id !== courierId);
+      }
+
+      if (prev.length >= 3) return prev;
+
+      return [...prev, courierId];
+    });
+  };
+
   useEffect(() => {
     const fetchCart = async () => {
       const token = localStorage.getItem("access");
@@ -138,12 +158,29 @@ export default function CheckoutPage() {
     fetchCart();
   }, [API_URL, clearCart, router, setCount]);
 
+
+  useEffect(() => {
+    const fetchCouriers = async () => {
+      try {
+        const res = await fetch(`${API_URL}/couriers/`);
+        const data = await res.json();
+        setCouriers(data);
+      } catch (error) {
+        console.error("Failed to fetch couriers:", error);
+      }
+    };
+
+    fetchCouriers();
+  }, [API_URL]);
+
+
   const canPlaceOrder =
     items.length > 0 &&
     !placingOrder &&
     (mode === "delivery"
       ? !!selectedAddress &&
         !!paymentMethod &&
+        selectedCourierIds.length > 0 &&
         (paymentMethod === "cod" || !!onlinePaymentOption)
       : mode === "pickup"
       ? !!selectedStore
@@ -194,6 +231,7 @@ export default function CheckoutPage() {
           ? "COD"
           : onlinePaymentOption || "ONLINE",
       customer_note: "",
+      courier_ids: mode === "delivery" ? selectedCourierIds : [],
     };
 
     try {
@@ -356,6 +394,61 @@ export default function CheckoutPage() {
                   />
                 </motion.div>
               )}
+
+
+              {mode === "delivery" && selectedAddress && paymentMethod === "cod" && (
+                <div className="rounded-xl border border-slate-200 bg-white p-5">
+                  
+                  {/* HEADER */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bike className="h-5 w-5 text-[#3a9688]" />
+                    <h3 className="text-lg font-serif font-bold text-brand-blue">
+                      Preferred Rider
+                    </h3>
+                  </div>
+
+                  <p className="text-sm text-slate-500 mb-4">
+                    Select up to 3 preferred couriers for your delivery.
+                  </p>
+
+                  {/* GRID */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {couriers.map((courier) => {
+                      const isChecked = selectedCourierIds.includes(courier.id);
+
+                      return (
+                        <label
+                          key={courier.id}
+                          className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition ${
+                            isChecked
+                              ? "border-[#3a9688] bg-[#f8faf9]"
+                              : "border-slate-200 hover:border-[#3a9688]/50"
+                          }`}
+                        >
+                          <Checkbox
+                            checked={isChecked}
+                            onCheckedChange={() => handleCourierToggle(courier.id)}
+                          />
+                          <span className="text-sm font-medium text-brand-blue">
+                            {courier.name}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  {/* SELECTED TEXT */}
+                  {preferredRiders.length > 0 && (
+                    <p className="text-xs text-slate-500 mt-3">
+                      Selected: {couriers
+                        .filter(c => selectedCourierIds.includes(c.id))
+                        .map(c => c.name)
+                        .join(", ")}
+                    </p>
+                  )}
+                </div>
+              )}
+
 
               {mode === "pickup" && (
                 <motion.div

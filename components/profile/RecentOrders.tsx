@@ -76,7 +76,7 @@ export default function RecentOrders({
                   {/* RIGHT */}
                   <div className="flex items-center gap-3">
                     <p className="font-semibold text-brand-blue">
-                        ₱{Number(orderItem.total || 0).toLocaleString()}
+                        ₱{Number(orderItem.subtotal || 0).toLocaleString()}
                         </p>
 
                     <span
@@ -154,23 +154,20 @@ export default function RecentOrders({
 
                         {/* ✅ DELIVERY CONDITION */}
                         {isDelivery ? (
-                            <div className="flex justify-between text-slate-600">
-                                <span>Delivery Fee</span>
-                                <span>
-                                ₱{Number(orderItem.delivery_fee || 0).toLocaleString()}
-                                </span>
-                            </div>
-                            ) : (
-                            <div className="flex justify-between text-green-600">
-                                <span>Pickup</span>
-                                <span>Free</span>
-                            </div>
-                            )}
+                          <p className="text-xs text-[#3a9688]">
+                            Delivery fee is paid directly to the rider upon delivery.
+                          </p>
+                        ) : (
+                          <div className="flex justify-between text-green-600">
+                            <span>Pickup</span>
+                            <span>Free</span>
+                          </div>
+                        )}
 
                         {/* TOTAL */}
                         <div className="flex justify-between font-semibold text-brand-blue border-t pt-2">
                           <span>Total</span>
-                          <span>{orderItem.total}</span>
+                          <span>₱{Number(orderItem.subtotal || 0).toLocaleString()}</span>
                         </div>
                       </div>
 

@@ -7,6 +7,12 @@ export default function ProductCategories({
   setSelectedCategory,
   setActiveTab,
 }: any) {
+
+  // ✅ NEW: filter only relevant categories
+  const filteredCategories = categories.filter((cat: any) =>
+    products.some((p: any) => p.category_name === cat.name)
+  );
+
   return (
     <section className="py-12">
 
@@ -19,10 +25,10 @@ export default function ProductCategories({
       </div>
 
       {/* CONTENT */}
-      {categories.length > 0 ? (
+      {filteredCategories.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
 
-          {categories.map((cat: any) => {
+          {filteredCategories.map((cat: any) => {
             const sample = products.find(
               (p: any) => p.category_name === cat.name
             );
@@ -39,7 +45,7 @@ export default function ProductCategories({
                   setActiveTab("products");
                 }}
                 className={`group rounded-lg border overflow-hidden text-left transition-all duration-300 ${
-                  selectedCategory === cat
+                  selectedCategory === cat.name
                     ? "border-[#2f8f83] shadow-md"
                     : "border-[#ebeae6] bg-white hover:shadow-md hover:-translate-y-1"
                 }`}

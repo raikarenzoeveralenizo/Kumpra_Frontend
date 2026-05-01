@@ -43,6 +43,7 @@ type SearchCategory = {
 type SearchOrganization = {
   id: number;
   name: string;
+  slug: string; 
 };
 
 type SearchBranch = {
@@ -50,6 +51,7 @@ type SearchBranch = {
   name: string;
   address?: string | null;
   phone?: string | null;
+  org_slug: string;
 };
 
 type SearchResponse = {
@@ -75,6 +77,8 @@ export default function SearchPage() {
 
   const [inputValue, setInputValue] = useState(query);
   const [activeTab, setActiveTab] = useState<ResultTab>("all");
+
+  const q = encodeURIComponent(query);
 
   const [results, setResults] = useState<SearchResponse>({
     products: [],
@@ -290,7 +294,7 @@ export default function SearchPage() {
 
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Stores
+                  Outlets
                 </p>
                 <p className="mt-2 text-2xl font-bold text-slate-900">
                   {counts.stores}
@@ -430,7 +434,7 @@ export default function SearchPage() {
                 <div className="mb-5 flex items-center gap-3">
                   <Store className="h-5 w-5 text-[#2f8f83]" />
                   <h2 className="text-xl font-semibold text-slate-900">
-                    Stores
+                    Outlets
                   </h2>
                 </div>
 
@@ -438,7 +442,7 @@ export default function SearchPage() {
                   {results.stores.map((store) => (
                     <Link
                       key={store.id}
-                      href={`/store/${store.id}`}
+                      href={`/k/locations/${store.id}-${store.name.toLowerCase().replace(/\s+/g, "-")}?type=outlet&from=search&q=${q}`}
                       className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md"
                     >
                       <h3 className="font-semibold text-slate-900">{store.name}</h3>
@@ -492,7 +496,7 @@ export default function SearchPage() {
                     {results.organizations.map((org) => (
                       <Link
                         key={org.id}
-                        href={`/store/${org.id}`}
+                        href={`/k/${org.name.toLowerCase().replace(/\s+/g, "-")}`}
                         className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md"
                       >
                         <h3 className="font-semibold text-slate-900">{org.name}</h3>
@@ -514,9 +518,10 @@ export default function SearchPage() {
 
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {results.branches.map((branch) => (
-                      <div
+                      <Link
                         key={branch.id}
-                        className="rounded-2xl border border-slate-200 bg-white p-5"
+                        href={`/k/locations/${branch.id}-${branch.name.toLowerCase().replace(/\s+/g, "-")}?type=branch&from=search&q=${q}`}
+                        className="rounded-2xl border border-slate-200 bg-white p-5 block transition hover:-translate-y-0.5 hover:shadow-md"
                       >
                         <h3 className="font-semibold text-slate-900">
                           {branch.name}
@@ -529,7 +534,9 @@ export default function SearchPage() {
                             {branch.phone}
                           </p>
                         )}
-                      </div>
+                      </Link>
+
+                      
                     ))}
                   </div>
                 </div>

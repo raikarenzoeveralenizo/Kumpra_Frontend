@@ -25,12 +25,11 @@ const LANGUAGES = ["EN", "中文", "ES", "FR", "DE"];
 export default function OrganizationPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = use(params);
+  const { slug } = use(params);
 
-  // ✅ extract numeric ID
-  const realId = id.split("-")[0];
+  
 
   const [organization, setOrganization] =
     useState<ApiOrganization | null>(null);
@@ -53,14 +52,14 @@ export default function OrganizationPage({
 
     const loadData = async () => {
       try {
-        const [orgRes, prodRes, catRes] = await Promise.all([
-          fetch(`${API_URL}/organizations/${realId}/`),
+        const orgRes = await fetch(`${API_URL}/organizations/slug/${slug}/`);
+        const orgData = await orgRes.json();
+
+        const [prodRes, catRes] = await Promise.all([
           fetch(`${API_URL}/products/`),
-          fetch(`${API_URL}/org-item-categories/${realId}/`),
+          fetch(`${API_URL}/categories/`), // ✅ FIX
         ]);
 
-        // ✅ ONLY ONCE
-        const orgData = await orgRes.json();
         const prodData = await prodRes.json();
         const catData = await catRes.json();
 
@@ -70,8 +69,7 @@ export default function OrganizationPage({
         setOrgCategories(Array.isArray(catData) ? catData : []);
 
         
-        setOrganization(orgData);
-        setAllProducts(Array.isArray(prodData) ? prodData : []);
+
       } catch {
         setError("Failed to load organization");
       } finally {
@@ -80,7 +78,7 @@ export default function OrganizationPage({
     };
 
     loadData();
-  }, [id]);
+  }, [slug]);
 
   const outletIds = useMemo(() => {
     const ids = new Set<number>();
@@ -130,6 +128,8 @@ export default function OrganizationPage({
           "https://images.unsplash.com/photo-1542838132-92c53300491e",
         type: "branch",
         orgId: organization.id, // ✅ IMPORTANT for routing
+        orgSlug: slug, 
+
       });
 
       // ✅ OUTLETS
@@ -145,6 +145,7 @@ export default function OrganizationPage({
             "https://images.unsplash.com/photo-1542838132-92c53300491e",
           type: "outlet",
           orgId: organization.id, // ✅ IMPORTANT
+          orgSlug: slug, 
         });
       });
     });

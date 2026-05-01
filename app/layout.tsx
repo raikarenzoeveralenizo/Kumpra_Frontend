@@ -14,6 +14,13 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: "Kumpra.ph | Multi-Store Ecommerce",
   description: "Your premium neighborhood marketplace",
+
+  // ✅ ADDED: this sets your browser tab icon (favicon)
+  icons: {
+    icon: "/img/green_logo.png",
+    shortcut: "/img/green_logo.png",
+    apple: "/img/green_logo.png",
+  },
 };
 
 export default function RootLayout({

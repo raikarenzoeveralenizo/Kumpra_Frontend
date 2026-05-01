@@ -111,9 +111,7 @@ export default function AllStoresPage() {
             return (
               <Link
                 key={org.id}
-                href={`/store/${org.id}-${org.name
-                  .toLowerCase()
-                  .replace(/\s+/g, "-")}`}
+                href={`/k/${org.name.toLowerCase().replace(/\s+/g, "-")}`}
                 className="block"
               >
                 <article className="overflow-hidden rounded-2xl border border-[#d9ddd9] bg-white shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
