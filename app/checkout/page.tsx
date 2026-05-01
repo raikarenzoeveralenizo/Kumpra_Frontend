@@ -8,10 +8,12 @@ import DeliveryAddressForm from "@/components/ui/DeliveryAddressForm";
 import PickupBranchSelector from "@/components/ui/PickupBranchSelector";
 import CheckoutSummary from "@/sections/checkout/CheckoutSummary";
 import { motion, AnimatePresence } from "framer-motion";
-import { Truck, Store, X, MapPin } from "lucide-react";
+import { Truck, Store, X, MapPin, Bike } from "lucide-react";
 import { useCart } from "@/store/useCart";
 import PaymentMethod from "@/components/checkout/PaymentMethod";
 import type { ApiOutlet } from "@/types/api-outlet";
+import { Checkbox } from "@/components/ui/Checkbox";
+
 
 type AddressItem = {
   id: number;
@@ -91,6 +93,31 @@ export default function CheckoutPage() {
     price: Number(item.unit_price),
     cartQuantity: item.quantity,
   }));
+
+  const [preferredRiders, setPreferredRiders] = useState<string[]>([]);
+
+  const courierOptions = ["Grab", "Lalamove", "Move It", "Maxim", "FoodPanda", "Any"];
+
+  const handleRiderToggle = (rider: string) => {
+    setPreferredRiders((prev) => {
+      // If clicking "Any"
+      if (rider === "Any") {
+        if (prev.includes("Any")) return [];
+        return ["Any"];
+      }
+
+      // If selecting other riders → remove "Any"
+      let updated = prev.filter((r) => r !== "Any");
+
+      if (updated.includes(rider)) {
+        return updated.filter((r) => r !== rider);
+      }
+
+      if (updated.length >= 3) return updated;
+
+      return [...updated, rider];
+    });
+  };
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -356,6 +383,58 @@ export default function CheckoutPage() {
                   />
                 </motion.div>
               )}
+
+
+              {mode === "delivery" && selectedAddress && paymentMethod === "cod" && (
+                <div className="rounded-xl border border-slate-200 bg-white p-5">
+                  
+                  {/* HEADER */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bike className="h-5 w-5 text-[#3a9688]" />
+                    <h3 className="text-lg font-serif font-bold text-brand-blue">
+                      Preferred Rider
+                    </h3>
+                  </div>
+
+                  <p className="text-sm text-slate-500 mb-4">
+                    Select up to 3 preferred couriers for your delivery.
+                  </p>
+
+                  {/* GRID */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {courierOptions.map((courier) => {
+                      const isChecked = preferredRiders.includes(courier);
+
+                      return (
+                        <label
+                          key={courier}
+                          className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition ${
+                            isChecked
+                              ? "border-[#3a9688] bg-[#f8faf9]"
+                              : "border-slate-200 hover:border-[#3a9688]/50"
+                          }`}
+                        >
+                          <Checkbox
+                            checked={isChecked}
+                            onCheckedChange={() => handleRiderToggle(courier)}
+                          />
+                          <span className="text-sm font-medium text-brand-blue">
+                            {courier}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  {/* SELECTED TEXT */}
+                  {preferredRiders.length > 0 && (
+                    <p className="text-xs text-slate-500 mt-3">
+                      Selected: {preferredRiders.join(", ")} ({preferredRiders.length}/3)
+                    </p>
+                  )}
+                </div>
+              )}
+
 
               {mode === "pickup" && (
                 <motion.div

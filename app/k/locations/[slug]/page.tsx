@@ -11,11 +11,19 @@ export default async function LocationPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ type?: string; org?: string }>;
+  params: Promise<{ slug: string }>;
+    searchParams: Promise<{
+    type?: string;
+    org?: string;
+    from?: string;
+    q?: string;
+  }>;
 }) {
-  const { id } = await params;
-  const { type, org } = await searchParams;
+  const { slug } = await params;
+
+  const id = slug.split("-")[0];
+
+  const { type, org, from, q } = await searchParams;
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const isBranch = type === "branch";
@@ -60,7 +68,12 @@ export default async function LocationPage({
         "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1000&auto=format&fit=crop",
       ];
 
-  const backHref = org ? `/store/${org}` : "/stores";
+  const backHref =
+    from === "search" && q
+      ? `/search?q=${q}`
+      : org && org !== "undefined"
+      ? `/k/${org}`
+      : `/search`;
 
   return (
     <main className="min-h-screen bg-[#f7f7f5]">

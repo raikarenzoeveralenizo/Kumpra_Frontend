@@ -368,13 +368,11 @@ export default function TrackingPage({
                     </div>
 
                     {!isPickup && (
-                      <div className="flex items-center justify-between text-slate-600">
-                        <span className="text-sm">Delivery Fee</span>
-                        <span className="text-sm font-medium">
-                          {formatPrice(deliveryFee)}
-                        </span>
-                      </div>
-                    )}
+                        <p className="text-xs text-slate-400">
+                          Delivery fee is paid directly to the rider upon delivery.
+                        </p>
+                      )}
+
 
                     <div className="flex items-center justify-between text-slate-600">
                       <span className="text-sm">Payment</span>
@@ -385,9 +383,12 @@ export default function TrackingPage({
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-bold text-brand-blue">Total</span>
                         <span className="text-lg font-bold text-brand-blue">
-                          {formatPrice(order.total)}
+                          {formatPrice(order.subtotal)}
                         </span>
                       </div>
+
+
+
                     </div>
                   </div>
                 </>
