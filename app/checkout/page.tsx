@@ -96,26 +96,19 @@ export default function CheckoutPage() {
 
   const [preferredRiders, setPreferredRiders] = useState<string[]>([]);
 
-  const courierOptions = ["Grab", "Lalamove", "Move It", "Maxim", "FoodPanda", "Any"];
+  const [couriers, setCouriers] = useState<any[]>([]);
+  const [selectedCourierIds, setSelectedCourierIds] = useState<number[]>([]);
 
-  const handleRiderToggle = (rider: string) => {
-    setPreferredRiders((prev) => {
-      // If clicking "Any"
-      if (rider === "Any") {
-        if (prev.includes("Any")) return [];
-        return ["Any"];
+
+  const handleCourierToggle = (courierId: number) => {
+    setSelectedCourierIds((prev) => {
+      if (prev.includes(courierId)) {
+        return prev.filter((id) => id !== courierId);
       }
 
-      // If selecting other riders → remove "Any"
-      let updated = prev.filter((r) => r !== "Any");
+      if (prev.length >= 3) return prev;
 
-      if (updated.includes(rider)) {
-        return updated.filter((r) => r !== rider);
-      }
-
-      if (updated.length >= 3) return updated;
-
-      return [...updated, rider];
+      return [...prev, courierId];
     });
   };
 
@@ -165,12 +158,29 @@ export default function CheckoutPage() {
     fetchCart();
   }, [API_URL, clearCart, router, setCount]);
 
+
+  useEffect(() => {
+    const fetchCouriers = async () => {
+      try {
+        const res = await fetch(`${API_URL}/couriers/`);
+        const data = await res.json();
+        setCouriers(data);
+      } catch (error) {
+        console.error("Failed to fetch couriers:", error);
+      }
+    };
+
+    fetchCouriers();
+  }, [API_URL]);
+
+
   const canPlaceOrder =
     items.length > 0 &&
     !placingOrder &&
     (mode === "delivery"
       ? !!selectedAddress &&
         !!paymentMethod &&
+        selectedCourierIds.length > 0 &&
         (paymentMethod === "cod" || !!onlinePaymentOption)
       : mode === "pickup"
       ? !!selectedStore
@@ -221,6 +231,7 @@ export default function CheckoutPage() {
           ? "COD"
           : onlinePaymentOption || "ONLINE",
       customer_note: "",
+      courier_ids: mode === "delivery" ? selectedCourierIds : [],
     };
 
     try {
@@ -402,12 +413,12 @@ export default function CheckoutPage() {
 
                   {/* GRID */}
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {courierOptions.map((courier) => {
-                      const isChecked = preferredRiders.includes(courier);
+                    {couriers.map((courier) => {
+                      const isChecked = selectedCourierIds.includes(courier.id);
 
                       return (
                         <label
-                          key={courier}
+                          key={courier.id}
                           className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition ${
                             isChecked
                               ? "border-[#3a9688] bg-[#f8faf9]"
@@ -416,10 +427,10 @@ export default function CheckoutPage() {
                         >
                           <Checkbox
                             checked={isChecked}
-                            onCheckedChange={() => handleRiderToggle(courier)}
+                            onCheckedChange={() => handleCourierToggle(courier.id)}
                           />
                           <span className="text-sm font-medium text-brand-blue">
-                            {courier}
+                            {courier.name}
                           </span>
                         </label>
                       );
@@ -429,7 +440,10 @@ export default function CheckoutPage() {
                   {/* SELECTED TEXT */}
                   {preferredRiders.length > 0 && (
                     <p className="text-xs text-slate-500 mt-3">
-                      Selected: {preferredRiders.join(", ")} ({preferredRiders.length}/3)
+                      Selected: {couriers
+                        .filter(c => selectedCourierIds.includes(c.id))
+                        .map(c => c.name)
+                        .join(", ")}
                     </p>
                   )}
                 </div>

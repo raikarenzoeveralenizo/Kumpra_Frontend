@@ -17,9 +17,33 @@ export default function AboutSection({
     ? organization.website
     : `https://${organization.website}`;
 
-  const socialName = organization.name
-    ?.toLowerCase()
-    .replace(/\s+/g, "");
+  // ✅ NEW: dynamic socials from backend
+  const socials = [
+    {
+      name: "Facebook",
+      icon: Facebook,
+      url: organization.facebooklink,
+      handle: organization.facebooklink,
+      color: "text-[#1877F2]",
+      bg: "bg-[#1877F2]/10",
+    },
+    {
+      name: "Instagram",
+      icon: Instagram,
+      url: organization.instagramlink,
+      handle: organization.instagramlink,
+      color: "text-[#E1306C]",
+      bg: "bg-[#E1306C]/10",
+    },
+    {
+      name: "Twitter",
+      icon: Twitter,
+      url: organization.twitterlink,
+      handle: organization.twitterlink,
+      color: "text-gray-800",
+      bg: "bg-gray-100",
+    },
+  ].filter((s) => s.url); 
 
   return (
     <section className="bg-[#f8f8f6] py-10">
@@ -34,7 +58,7 @@ export default function AboutSection({
               About {organization.name}
             </h2>
             <p className="mt-3 text-gray-600 leading-relaxed">
-              {organization.description ||
+              {organization.bio ||
                 "We are committed to delivering high-quality products and excellent customer service."}
             </p>
           </div>
@@ -115,40 +139,7 @@ export default function AboutSection({
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
 
-                  {[
-                    {
-                      name: "Facebook",
-                      icon: Facebook,
-                      url: `https://facebook.com/${socialName}`,
-                      handle: `@${socialName}`,
-                      color: "text-[#1877F2]",
-                      bg: "bg-[#1877F2]/10",
-                    },
-                    {
-                      name: "Instagram",
-                      icon: Instagram,
-                      url: `https://instagram.com/${socialName}`,
-                      handle: `@${socialName}`,
-                      color: "text-[#E1306C]",
-                      bg: "bg-[#E1306C]/10",
-                    },
-                    {
-                      name: "Twitter",
-                      icon: Twitter,
-                      url: `https://twitter.com/${socialName}`,
-                      handle: `@${socialName}`,
-                      color: "text-gray-800",
-                      bg: "bg-gray-100",
-                    },
-                    {
-                      name: "LinkedIn",
-                      icon: Linkedin,
-                      url: `https://linkedin.com/company/${socialName}`,
-                      handle: organization.name,
-                      color: "text-[#0A66C2]",
-                      bg: "bg-[#0A66C2]/10",
-                    },
-                  ].map((s) => (
+                  {socials.map((s) => (
                     <a
                       key={s.name}
                       href={s.url}
@@ -182,7 +173,7 @@ export default function AboutSection({
           <div className="rounded-xl overflow-hidden border border-[#ebeae6] shadow-sm">
             <img
               src={
-                organization.coverImage ||
+                organization.bannerimg ||
                 "https://images.unsplash.com/photo-1542838132-92c53300491e"
               }
               alt={organization.name}

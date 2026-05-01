@@ -17,9 +17,7 @@ export default function ContactSection({
   organization: any;
   totalLocations: number;
 }) {
-  const email =
-    organization.email ||
-    `contact@${organization.name?.toLowerCase().replace(/\s+/g, "")}.ph`;
+  
 
   return (
     <section className="bg-[#f8f8f6] py-14">
@@ -46,18 +44,22 @@ export default function ContactSection({
             <div className="flex items-center gap-3">
               <MapPin className="h-4 w-4 text-[#2f8f83]" />
               <span>
-                {organization.address || "1 Grand Plaza, Business Park"}
+                {organization.location || "No location available"}
               </span>
             </div>
 
             <div className="flex items-center gap-3">
               <Phone className="h-4 w-4 text-[#2f8f83]" />
-              <span>{organization.phone || "+63 900 000 0000"}</span>
+              <span>
+                {organization.contactnumber || "No contact number"}
+              </span>
             </div>
 
             <div className="flex items-center gap-3">
               <Mail className="h-4 w-4 text-[#2f8f83]" />
-              <span>{email}</span>
+              <span>
+                {organization.email || "No email available"}
+              </span>
             </div>
 
             <div className="flex items-center gap-3">

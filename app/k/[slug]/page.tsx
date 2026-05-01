@@ -57,7 +57,7 @@ export default function OrganizationPage({
 
         const [prodRes, catRes] = await Promise.all([
           fetch(`${API_URL}/products/`),
-          fetch(`${API_URL}/org-item-categories/${orgData.id}/`), // ✅ FIX
+          fetch(`${API_URL}/categories/`), // ✅ FIX
         ]);
 
         const prodData = await prodRes.json();

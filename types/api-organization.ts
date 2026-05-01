@@ -35,6 +35,18 @@ export type ApiOrganization = {
   id: number;
   name: string;
   createdat?: string;
+
+
+  bannerimg?: string | null;
+  contactnumber?: string | null;
+  email?: string | null;
+  location?: string | null;
+  profilephoto?: string | null;
+  facebooklink?: string | null;
+  instagramlink?: string | null;
+  twitterlink?: string | null;
+  bio?: string | null;
+
   branches?: ApiBranch[];
   total_branches?: number;
   total_outlets?: number;
