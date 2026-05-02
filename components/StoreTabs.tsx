@@ -17,16 +17,16 @@ export default function StoreTabs({
 
   return (
     <div className="bg-white border-b border-gray-200">
-      <div className="container-shell flex items-center justify-between">
+      <div className="container-shell flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 
         {/* TABS */}
-        <div className="flex gap-8">
+        <div className="flex gap-8 overflow-x-auto no-scrollbar">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`
-                relative py-4 text-sm font-medium capitalize transition
+                relative py-4 text-sm font-medium capitalize transition whitespace-nowrap
                 ${
                   activeTab === tab
                     ? "text-[#2f8f83]"
@@ -45,7 +45,7 @@ export default function StoreTabs({
         </div>
 
         {/* SEARCH */}
-        <div className="relative w-72">
+        <div className="relative w-full md:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
 
           <input

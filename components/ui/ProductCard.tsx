@@ -32,10 +32,8 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
   const getImageUrl = (image: string | null) => {
     if (!image) return "/img/placeholder.jpg";
 
-    // Already full URL
     if (image.startsWith("http")) return image;
 
-    // Build Supabase URL from path
     return `${SUPABASE_BASE_URL}/${image}`;
   };
 
@@ -122,12 +120,13 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
       href={`/product/${productLinkId}`}
       className="group block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
     >
-      {/* Image (responsive height) */}
-      <div className="h-36 sm:h-44 flex items-center justify-center bg-[#f8fafc] p-2">
+      
+      {/* IMAGE (shorter height instead of square) */}
+      <div className="relative w-full h-40 sm:h-44 md:h-48 bg-[#f8fafc] overflow-hidden">
         <img
           src={getImageUrl(product.image)}
           alt={product.name}
-          className="max-h-full max-w-full object-contain transition group-hover:scale-105"
+          className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
           loading="lazy"
           onError={(e) => {
             e.currentTarget.src = "/img/placeholder.jpg";
@@ -155,7 +154,6 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
 
         {/* Bottom Row */}
         <div className="mt-2 flex items-center justify-between" ref={buttonRef}>
-          {/* Left: Price + Stock */}
           <div>
             <p className="text-sm sm:text-base font-bold text-slate-900">
               {formatPrice(product.price)}
@@ -165,7 +163,6 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
             </p>
           </div>
 
-          {/* Cart Button (UNCHANGED) */}
           <motion.button
             type="button"
             whileTap={{ scale: 0.9 }}
